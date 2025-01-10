@@ -1,5 +1,6 @@
 package com.example.safelock.presentation.onboarding
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -7,10 +8,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
@@ -22,7 +25,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,15 +42,33 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import com.example.safelock.R
-import java.net.CookieStore
+import com.example.safelock.utils.ApiResponse
+import com.example.safelock.utils.AppConstants
+import com.example.safelock.utils.CustomLoadingBar
+import com.example.safelock.utils.dialog.SuccessDialog
+import com.example.safelock.utils.dialog.ValidationFailureDialog
 
 @Composable
-fun SignUpScreen(modifier: Modifier = Modifier) {
+fun SignUpScreen(
+    navController: NavController?,
+    viewModel: SignUpViewModel = hiltViewModel(),
+) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var mobileNumber by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+    val modifier: Modifier = Modifier
+    val signUpState by viewModel.signUpState.collectAsState()
+    // State to control dialog visibility
+    var showValidationFailureDialog by remember { mutableStateOf(false) }
+    var showSuccessDialog by remember { mutableStateOf(false) }
+    var dialogMessage by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
+
 
 
     Box(
@@ -61,22 +84,48 @@ fun SignUpScreen(modifier: Modifier = Modifier) {
             verticalArrangement = Arrangement.Top
         ) {
 
+            if (showSuccessDialog) {
+                SuccessDialog(
+                    title = AppConstants.ACCOUNT_CREATED,
+                    subtitle = "Please proceed to login to secure your valuables",
+                    buttonText = "Continue",
+                    onButtonClick = {
+                        // Navigate to the next screen
+                        navController?.navigate("Login")
+                        viewModel.clearSuccessState()
+                    }
+                )
+            }
+
             Image(
                 painter = painterResource(id = R.drawable.safelock_signup_img),
                 contentDescription = "Placeholder inside the sign up screen",
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(200.dp)
+                    .height(350.dp)
+                    .padding(top = 45.dp)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            if (isLoading){
+                CustomLoadingBar(
+                    "Please Wait....",
+                    imageResId = R.drawable.loading
+                )
+                viewModel.clearLoadingState()
+            }
+
             Text(
                 text = "Sign up",
-                style = MaterialTheme.typography.headlineMedium,
+                style = MaterialTheme.typography.headlineLarge,
                 color = Color.Black,
+                fontSize = 45.sp,
                 textAlign = TextAlign.Center
             )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
 
             // Email Field
             OutlinedTextField(
@@ -86,12 +135,17 @@ fun SignUpScreen(modifier: Modifier = Modifier) {
                 leadingIcon = {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_email),
-                        contentDescription = "Email Icon"
+                        contentDescription = "Email Icon",
+                        modifier = Modifier
+                            .wrapContentWidth()
+                            .height(30.dp)
                     )
                 },
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Email)
             )
+
+            Spacer(modifier = Modifier.height(12.dp))
 
             // Password Field with Toggle
             OutlinedTextField(
@@ -101,7 +155,10 @@ fun SignUpScreen(modifier: Modifier = Modifier) {
                 leadingIcon = {
                     Icon(
                         painter = painterResource(id = R.drawable.password_lock),
-                        contentDescription = "Password Icon"
+                        contentDescription = "Password Icon",
+                        modifier = Modifier
+                            .wrapContentWidth()
+                            .height(30.dp)
                     )
                 },
                 trailingIcon = {
@@ -115,8 +172,20 @@ fun SignUpScreen(modifier: Modifier = Modifier) {
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Password)
             )
+            Spacer(modifier = Modifier.height(25.dp))
 
-            Spacer(modifier = Modifier.height(8.dp))
+            // ValidationFailureDialog
+            if (showValidationFailureDialog) {
+                ValidationFailureDialog(
+                    title = "Sign up unsuccessful",
+                    message = dialogMessage,
+                    onCancelClick = {
+                        // Dismiss the dialog
+                        showValidationFailureDialog = false
+                        viewModel.clearFailureState()
+                    }
+                )
+            }
 
 
             // Terms and Conditions
@@ -131,11 +200,13 @@ fun SignUpScreen(modifier: Modifier = Modifier) {
 
             // Continue Button
             Button(
-                onClick = { /* Handle signup logic */ },
+                onClick = { viewModel.signUp(email, password) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp)
             ) {
+                Log.d("email", email)
+                Log.d("password", password)
                 Text("Continue", style = MaterialTheme.typography.bodyMedium)
             }
 
@@ -147,10 +218,35 @@ fun SignUpScreen(modifier: Modifier = Modifier) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(text = "Joined us Before?", color = Color.Gray)
-                TextButton(onClick = {}) {
+                TextButton(onClick = {navController?.navigate("Login")}) {
                     Text("Login", color = MaterialTheme.colorScheme.primary)
                 }
 
+            }
+
+
+            when (val state = signUpState) {
+                is ApiResponse.Idle -> {
+                    // Do nothing; no feedback to the user yet
+                }
+
+                is ApiResponse.Loading -> {
+                    isLoading = true
+                }
+
+                is ApiResponse.Success -> {
+                    if (!showSuccessDialog) {
+                        showSuccessDialog = true
+                    }
+
+                }
+
+                is ApiResponse.Failure -> {
+                    if (!showValidationFailureDialog) {
+                        dialogMessage = state.e?.message ?: "Sign-up Failed!"
+                        showValidationFailureDialog = true
+                    }
+                }
             }
         }
     }
@@ -159,5 +255,5 @@ fun SignUpScreen(modifier: Modifier = Modifier) {
 @Composable
 @Preview(showBackground = true)
 fun SignUpScreenPreview() {
-    SignUpScreen()
+    SignUpScreen(navController = null)
 }

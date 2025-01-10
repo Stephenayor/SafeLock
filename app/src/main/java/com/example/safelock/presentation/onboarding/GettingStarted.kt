@@ -50,7 +50,7 @@ fun GettingStarted(navController: NavController) {
             Spacer(modifier = Modifier.height(16.dp))
 
             Button(
-                onClick = {},
+                onClick = {navController.navigate("Sign up")},
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
@@ -66,7 +66,7 @@ fun GettingStarted(navController: NavController) {
             Spacer(modifier = Modifier.height(16.dp))
 
             Button(
-                onClick = { /* TODO: Handle Login Action */ },
+                onClick = { navController.navigate("Login") },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp)

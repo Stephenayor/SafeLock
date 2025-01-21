@@ -71,8 +71,9 @@ object AppModule {
     @Provides
     @Singleton
     fun provideSignUpLoginRepository(
-        firebaseAuth: FirebaseAuth
+        firebaseAuth: FirebaseAuth,
+        sharedPreferences: SharedPreferences
     ): SignUpLoginRepository{
-        return SignUpLoginRepositoryImpl(firebaseAuth)
+        return SignUpLoginRepositoryImpl(firebaseAuth, sharedPreferences)
     }
 }

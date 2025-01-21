@@ -2,4 +2,8 @@
 <resources>
 
     <style name="Theme.SafeLock" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.SafeLock.AppCompat" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- Add any customizations here -->
+    </style>
+
 </resources>

@@ -235,6 +235,7 @@ fun SignUpScreen(
                 }
 
                 is ApiResponse.Success -> {
+                    isLoading = false
                     if (!showSuccessDialog) {
                         showSuccessDialog = true
                     }
@@ -242,6 +243,7 @@ fun SignUpScreen(
                 }
 
                 is ApiResponse.Failure -> {
+                    isLoading = false
                     if (!showValidationFailureDialog) {
                         dialogMessage = state.e?.message ?: "Sign-up Failed!"
                         showValidationFailureDialog = true

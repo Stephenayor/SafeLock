@@ -1,5 +1,6 @@
 [versions]
 agp = "8.7.3"
+biometricVersion = "1.1.0"
 compressor = "2.1.1"
 firebaseAuth = "23.1.0"
 firebaseBom = "33.7.0"
@@ -22,6 +23,10 @@ material3Lint = "1.4.0-alpha05"
 securityCrypto = "1.1.0-alpha06"
 securityCryptoKtx = "1.0.0"
 kotlinxCoroutinesAndroid = "1.7.3"
+appcompat = "1.7.0"
+material = "1.12.0"
+activity = "1.9.3"
+constraintlayout = "2.2.0"
 
 
 [libraries]
@@ -30,6 +35,7 @@ androidx-material-icons-core = { module = "androidx.compose.material:material-ic
 androidx-material-icons-extended = { module = "androidx.compose.material:material-icons-extended", version.ref = "materialIconsCore" }
 androidx-hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
 androidx-security-crypto = { module = "androidx.security:security-crypto", version.ref = "securityCrypto" }
+biometric = { module = "androidx.biometric:biometric", version.ref = "biometricVersion" }
 compressor = { module = "id.zelory:compressor", version.ref = "compressor" }
 firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
 firebase-auth = { module = "com.google.firebase:firebase-auth", version.ref = "firebaseAuth" }
@@ -58,6 +64,10 @@ androidx-animation-core-lint = { group = "androidx.compose.animation", name = "a
 androidx-material3-lint = { group = "androidx.compose.material3", name = "material3-lint", version.ref = "material3Lint" }
 androidx-security-crypto-ktx = { group = "androidx.security", name = "securityCrypto", version.ref = "securityCryptoKtx" }
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinxCoroutinesAndroid" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+androidx-activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
+androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

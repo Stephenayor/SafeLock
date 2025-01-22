@@ -54,7 +54,6 @@ import com.example.safelock.presentation.login.LoginViewModel
 import com.example.safelock.ui.theme.SafeLockTheme
 import com.example.safelock.utils.AppConstants
 import com.example.safelock.utils.BiometricPromptManager
-import com.example.safelock.utils.Route
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.firestore

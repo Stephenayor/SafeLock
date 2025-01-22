@@ -20,6 +20,7 @@ navigationRuntimeKtx = "2.8.5"
 navigationCompose = "2.8.5"
 animationCoreLint = "1.8.0-alpha07"
 material3Lint = "1.4.0-alpha05"
+playServices = "17.0.0"
 securityCrypto = "1.1.0-alpha06"
 securityCryptoKtx = "1.0.0"
 kotlinxCoroutinesAndroid = "1.7.3"
@@ -68,6 +69,7 @@ androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 androidx-activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
 androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
+play-services = { module = "com.google.android.gms:play-services", version.ref = "playServices" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

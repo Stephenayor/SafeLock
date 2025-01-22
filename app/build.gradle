@@ -95,4 +95,7 @@ dependencies {
     //Biometrics
     implementation(libs.biometric)
 
+    //Google play services
+    implementation 'com.google.android.gms:play-services-auth:21.3.0'
+
 }

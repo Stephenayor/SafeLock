@@ -221,13 +221,6 @@ fun LoginScreen(
                 }
 
                 val currentUser = firebaseAuth.currentUser
-                if (currentUser != null && showBiometricsDialog) {
-                    val intent = Intent(context, BiometricsActivity::class.java).apply {
-                        putExtra(AppConstants.USER_UID, currentUser.uid)
-                    }
-                   context.startActivity(intent)
-                    navController?.popBackStack()
-                }
 
                 when (val state = loginState) {
                     is ApiResponse.Idle -> {
@@ -250,7 +243,6 @@ fun LoginScreen(
                             putExtra(AppConstants.USER_UID, currentUser?.uid)
                         }
                         biometricsLauncher.launch(intent)
-
                     }
 
                     is ApiResponse.Failure -> {

@@ -69,6 +69,7 @@ class BiometricsActivity : AppCompatActivity() {
     private lateinit var viewModel: LoginViewModel
     private val loginViewModel: LoginViewModel by viewModels()
     private lateinit var userId: String
+    private  var isFromGettingStarted: Boolean? = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -80,6 +81,7 @@ class BiometricsActivity : AppCompatActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     userId  = intent.getStringExtra(AppConstants.USER_UID).toString()
+                    isFromGettingStarted = intent.getBooleanExtra(AppConstants.GETTING_STARTED, false)
                     val biometricResult by promptManager.promptResults.collectAsState(
                         initial = null
                     )

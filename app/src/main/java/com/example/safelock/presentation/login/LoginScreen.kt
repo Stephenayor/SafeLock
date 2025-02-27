@@ -71,6 +71,7 @@ import com.google.firebase.firestore.firestore
 fun LoginScreen(
     navController: NavController?,
     viewModel: LoginViewModel = hiltViewModel(),
+    isFromBiometrics: Boolean = false
 ) {
     val context = LocalContext.current
     val biometricsLauncher = rememberLauncherForActivityResult(
@@ -268,8 +269,9 @@ fun LoginScreen(
                         println("Activity result: $it")
                     }
                 )
-                LaunchedEffect(biometricResult) {
-                    if (biometricResult is BiometricPromptManager.BiometricResult.AuthenticationNotSet) {
+
+                LaunchedEffect(biometricResult, isFromBiometrics) {
+                    if (!isFromBiometrics && biometricResult is BiometricPromptManager.BiometricResult.AuthenticationNotSet) {
                         if (Build.VERSION.SDK_INT >= 30) {
                             val enrollIntent = Intent(Settings.ACTION_BIOMETRIC_ENROLL).apply {
                                 putExtra(
@@ -296,7 +298,9 @@ fun LoginScreen(
 //                                ) {
 //                                    navController?.navigate(Route.DASHBOARD)
 //                                }
-                                navController?.navigate(Route.DASHBOARD)
+                                navController?.navigate(Route.DASHBOARD){
+                                    popUpTo(Route.LOGIN){inclusive = true}
+                                }
                             }
                         }
                     }

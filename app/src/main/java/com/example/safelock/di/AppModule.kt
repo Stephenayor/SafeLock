@@ -5,7 +5,9 @@ import android.content.SharedPreferences
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import com.example.safelock.data.repository.SignUpLoginRepository
+import com.example.safelock.data.repository.DashBoardRepository
 import com.example.safelock.domain.SignUpLoginRepositoryImpl
+import com.example.safelock.domain.DashBoardRepositoryImpl
 import com.example.safelock.utils.AppConstants
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
@@ -75,5 +77,15 @@ object AppModule {
         sharedPreferences: SharedPreferences
     ): SignUpLoginRepository{
         return SignUpLoginRepositoryImpl(firebaseAuth, sharedPreferences)
+    }
+
+    @Provides
+    @Singleton
+    fun provideDashBoardRepository(
+        firebaseStorage: FirebaseStorage,
+        firebaseFireStore: FirebaseFirestore,
+        context: Context
+    ): DashBoardRepository{
+        return DashBoardRepositoryImpl(firebaseStorage, firebaseFireStore, context)
     }
 }

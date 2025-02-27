@@ -103,10 +103,11 @@ fun GettingStarted(navController: NavController) {
                     if (currentUser != null) {
                         val intent = Intent(context, BiometricsActivity::class.java).apply {
                             putExtra(AppConstants.USER_UID, currentUser.uid)
+                            putExtra(AppConstants.GETTING_STARTED, true)
                         }
                         biometricsLauncher.launch(intent)
                     } else {
-                        navController.navigate("Login")
+                        navController.navigate(Route.LOGIN)
                     }
                 },
                 modifier = Modifier

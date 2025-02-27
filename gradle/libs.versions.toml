@@ -1,7 +1,9 @@
 [versions]
 agp = "8.7.3"
 biometricVersion = "1.1.0"
+coilCompose = "2.2.2"
 compressor = "2.1.1"
+converterMoshi = "2.9.0"
 firebaseAuth = "23.1.0"
 firebaseBom = "33.7.0"
 firebaseDatabaseKtx = "21.0.0"
@@ -21,6 +23,8 @@ navigationCompose = "2.8.5"
 animationCoreLint = "1.8.0-alpha07"
 material3Lint = "1.4.0-alpha05"
 playServices = "17.0.0"
+playServicesAuth = "21.3.0"
+retrofit = "2.9.0"
 securityCrypto = "1.1.0-alpha06"
 securityCryptoKtx = "1.0.0"
 kotlinxCoroutinesAndroid = "1.7.3"
@@ -37,12 +41,15 @@ androidx-material-icons-extended = { module = "androidx.compose.material:materia
 androidx-hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
 androidx-security-crypto = { module = "androidx.security:security-crypto", version.ref = "securityCrypto" }
 biometric = { module = "androidx.biometric:biometric", version.ref = "biometricVersion" }
+coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
 compressor = { module = "id.zelory:compressor", version.ref = "compressor" }
+converter-moshi = { module = "com.squareup.retrofit2:converter-moshi", version.ref = "converterMoshi" }
 firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
 firebase-auth = { module = "com.google.firebase:firebase-auth", version.ref = "firebaseAuth" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
 firebase-database-ktx = { module = "com.google.firebase:firebase-database-ktx", version.ref = "firebaseDatabaseKtx" }
 firebase-firestore = { module = "com.google.firebase:firebase-firestore" }
+firebase-messaging = { module = "com.google.firebase:firebase-messaging" }
 firebase-storage = { module = "com.google.firebase:firebase-storage" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
@@ -70,6 +77,8 @@ material = { group = "com.google.android.material", name = "material", version.r
 androidx-activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
 androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
 play-services = { module = "com.google.android.gms:play-services", version.ref = "playServices" }
+play-services-auth = { module = "com.google.android.gms:play-services-auth", version.ref = "playServicesAuth" }
+retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

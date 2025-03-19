@@ -7,6 +7,7 @@ import android.hardware.biometrics.BiometricManager.Authenticators.DEVICE_CREDEN
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -44,6 +45,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
@@ -53,7 +55,8 @@ import com.example.safelock.R
 import com.example.safelock.presentation.login.LoginViewModel
 import com.example.safelock.ui.theme.SafeLockTheme
 import com.example.safelock.utils.AppConstants
-import com.example.safelock.utils.BiometricPromptManager
+import com.example.safelock.utils.Tools
+import com.example.safelock.utils.biometrics.BiometricPromptManager
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.firestore
@@ -173,7 +176,7 @@ class BiometricsActivity : AppCompatActivity() {
                                         // Cancel Button
                                         TextButton(onClick = {
                                             showPrompt = false
-
+                                            finish()
                                         }) {
                                             Text(
                                                 text = "Cancel",
@@ -182,7 +185,7 @@ class BiometricsActivity : AppCompatActivity() {
                                             )
                                         }
 
-                                        // Try Again Button
+
                                         Button(onClick = {
                                             showPrompt = false
                                             // Trigger the biometric prompt
@@ -202,14 +205,26 @@ class BiometricsActivity : AppCompatActivity() {
                         biometricResult?.let { result ->
                             if (result is BiometricPromptManager.BiometricResult.AuthenticationSuccess) {
                                 LaunchedEffect(Unit) {
-                                    val intent = Intent().apply {
-                                        putExtra("AUTH_SUCCESS", true)
+                                    if (isFromGettingStarted as Boolean){
+                                        val intent = Intent().apply {
+                                            putExtra("AUTH_SUCCESS", true)
+                                        }
+                                        setResult(Activity.RESULT_OK, intent)
+                                        finish()
+                                    }else{
+                                        val intent = Intent().apply {
+                                            putExtra("AUTH_SUCCESS", true)
+                                        }
+                                        setResult(Activity.RESULT_OK, intent)
+                                        finish()
+                                        createUserDetailsOnFirebase()
                                     }
-                                    setResult(Activity.RESULT_OK, intent)
-                                    finish()
-                                    createUserDetailsOnFirebase()
-
                                 }
+                            }
+
+                            if (result is BiometricPromptManager.BiometricResult.AuthenticationError) {
+                                Tools.showToast(LocalContext.current, result.error)
+                                finish()
                             }
 
 
@@ -254,7 +269,7 @@ class BiometricsActivity : AppCompatActivity() {
     ) {
         val cloudFireStore = Firebase.firestore
         val documentReference =
-            cloudFireStore.collection(AppConstants.SAFELOCK_USERS).document(userId.toString())
+            cloudFireStore.collection(AppConstants.SAFELOCK_USERS).document(userId)
         val userDetails = HashMap<String, Any>()
         userDetails["email"] = loginViewModel.getUserEmail(AppConstants.MAIL).toString()
         userDetails["fingerprintKey"] = UUID.randomUUID().toString()

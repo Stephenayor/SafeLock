@@ -6,7 +6,6 @@ import android.hardware.biometrics.BiometricManager.Authenticators.BIOMETRIC_STR
 import android.hardware.biometrics.BiometricManager.Authenticators.DEVICE_CREDENTIAL
 import android.os.Build
 import android.provider.Settings
-import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -56,10 +55,9 @@ import com.example.safelock.R
 import com.example.safelock.presentation.biometrics.BiometricsActivity
 import com.example.safelock.utils.ApiResponse
 import com.example.safelock.utils.AppConstants
-import com.example.safelock.utils.BiometricPromptManager
+import com.example.safelock.utils.biometrics.BiometricPromptManager
 import com.example.safelock.utils.CustomLoadingBar
 import com.example.safelock.utils.Route
-import com.example.safelock.utils.dialog.BiometricsAuthenticationDialog
 import com.example.safelock.utils.dialog.ValidationFailureDialog
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
@@ -74,13 +72,16 @@ fun LoginScreen(
     isFromBiometrics: Boolean = false
 ) {
     val context = LocalContext.current
+    //This listens to the result from BiometricsActivity
     val biometricsLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult(),
         onResult = { result ->
             if (result.resultCode == Activity.RESULT_OK) {
                 val isSuccess = result.data?.getBooleanExtra("AUTH_SUCCESS", false) ?: false
                 if (isSuccess) {
-                    navController?.navigate(Route.DASHBOARD)
+                    navController?.navigate(Route.HOME_SCREEN){
+                        popUpTo(Route.LOGIN){inclusive = true}
+                    }
                 }
             }
         }
@@ -139,7 +140,6 @@ fun LoginScreen(
             }
 
             if (showFullContent) {
-
                 //Email
                 OutlinedTextField(
                     value = email,
@@ -237,9 +237,6 @@ fun LoginScreen(
                         viewModel.saveUserEmail(AppConstants.MAIL, email)
                         viewModel.saveUserPassword(AppConstants.PASSWORD, password)
                         // Launch BiometricsActivity
-//                        val intent = Intent(context, BiometricsActivity::class.java)
-//                        intent.putExtra(AppConstants.USER_UID, currentUser?.uid)
-//                        context.startActivity(intent)
                         val intent = Intent(context, BiometricsActivity::class.java).apply {
                             putExtra(AppConstants.USER_UID, currentUser?.uid)
                         }
@@ -298,11 +295,30 @@ fun LoginScreen(
 //                                ) {
 //                                    navController?.navigate(Route.DASHBOARD)
 //                                }
-                                navController?.navigate(Route.DASHBOARD){
+                                navController?.navigate(Route.HOME_SCREEN){
                                     popUpTo(Route.LOGIN){inclusive = true}
                                 }
                             }
+                            navController?.navigate(Route.HOME_SCREEN){
+                                popUpTo(Route.LOGIN){inclusive = true}
+                            }
                         }
+                    }
+
+                    if (result is BiometricPromptManager.BiometricResult.AuthenticationError) {
+                        val message = result.error
+                        ValidationFailureDialog(
+                            title = "Incomplete",
+                            message = message,
+                            onCancelClick = {
+                                // Dismiss the dialog
+                                showValidationFailureDialog = false
+                            },
+                            onTryAgainClick = {
+                                val intent = Intent(context, BiometricsActivity::class.java)
+                                context.startActivity(intent)
+                            }
+                        )
                     }
 
                     Text(

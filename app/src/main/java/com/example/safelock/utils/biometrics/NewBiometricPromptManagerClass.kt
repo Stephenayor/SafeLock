@@ -1,5 +1,6 @@
-package com.example.safelock.utils
+package com.example.safelock.utils.biometrics
 
+import android.content.Context
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import androidx.biometric.BiometricManager
@@ -7,23 +8,28 @@ import androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_STRONG
 import androidx.biometric.BiometricManager.Authenticators.DEVICE_CREDENTIAL
 import androidx.biometric.BiometricPrompt
 import androidx.biometric.BiometricPrompt.PromptInfo
+import androidx.compose.ui.platform.LocalContext
+import androidx.fragment.app.FragmentActivity
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
 
-class BiometricPromptManager(
+class NewBiometricPromptManagerClass(
     private var activity: AppCompatActivity
 ) {
+
     private val resultChannel = Channel<BiometricResult>()
     val promptResults = resultChannel.receiveAsFlow()
+    private var isPromptShowing = false
 
-    fun initialize(activity: AppCompatActivity) {
-        this.activity = activity
-    }
+
 
     fun showBiometricPrompt(
         title: String?,
         description: String?
     ) {
+        // If a prompt is already showing, don't show again
+        if (isPromptShowing) return
+        isPromptShowing = true
 
         val activity = this.activity
         val manager = BiometricManager.from(activity)
@@ -62,16 +68,19 @@ class BiometricPromptManager(
                 override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
                     super.onAuthenticationError(errorCode, errString)
                     resultChannel.trySend(BiometricResult.AuthenticationError(errString.toString()))
+                    isPromptShowing = false
                 }
 
                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                     super.onAuthenticationSucceeded(result)
                     resultChannel.trySend(BiometricResult.AuthenticationSuccess)
+                    isPromptShowing = false
                 }
 
                 override fun onAuthenticationFailed() {
                     super.onAuthenticationFailed()
                     resultChannel.trySend(BiometricResult.AuthenticationFailed)
+                    isPromptShowing = false
                 }
             }
         )

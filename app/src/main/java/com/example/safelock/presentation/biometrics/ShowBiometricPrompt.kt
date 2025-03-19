@@ -5,7 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
-import com.example.safelock.utils.BiometricPromptManager
+import com.example.safelock.utils.biometrics.BiometricPromptManager
 
 @Composable
 fun ShowBiometricPrompt(

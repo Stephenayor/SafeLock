@@ -1,5 +1,6 @@
 package com.example.safelock.presentation.onboarding
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
 import android.hardware.biometrics.BiometricManager.Authenticators.BIOMETRIC_STRONG
@@ -25,6 +26,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -34,20 +36,45 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.safelock.R
+import com.example.safelock.presentation.AnalyticsViewModel
 import com.example.safelock.presentation.biometrics.BiometricsActivity
 import com.example.safelock.utils.AppConstants
-import com.example.safelock.utils.BiometricPromptManager
+import com.example.safelock.utils.biometrics.BiometricPromptManager
+import com.example.safelock.utils.Firebase.EventTracker
 import com.example.safelock.utils.Route
 import com.google.firebase.Firebase
+import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.auth.auth
 
 @Composable
-fun GettingStarted(navController: NavController) {
+fun GettingStarted(
+    navController: NavController,
+    analyticsViewModel: AnalyticsViewModel = hiltViewModel()
+) {
+
+    val firebaseAnalytics = analyticsViewModel.analytics
+    trackScreen("GettingStarted", analyticsViewModel)
+
+    DisposableEffect(Unit) {
+        onDispose {
+            val bundle =
+                EventTracker.trackEvent("GettingStartedScreenDisposable", "Getting")
+            firebaseAnalytics.logEvent(FirebaseAnalytics.Event.SCREEN_VIEW, bundle)
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        val bundle =
+            EventTracker.trackEvent("GettingStartedScreenLaunch", "GettingStartedScreenLaunch")
+        firebaseAnalytics.logEvent(FirebaseAnalytics.Event.SCREEN_VIEW, bundle)
+    }
     Scaffold(
         modifier = Modifier.background(MaterialTheme.colorScheme.primary)
     ) { innerPadding ->
+        Modifier.padding(innerPadding)
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -63,7 +90,9 @@ fun GettingStarted(navController: NavController) {
                     if (result.resultCode == Activity.RESULT_OK) {
                         val isSuccess = result.data?.getBooleanExtra("AUTH_SUCCESS", false) ?: false
                         if (isSuccess) {
-                            navController.navigate(Route.DASHBOARD)
+                            navController.navigate(Route.HOME_SCREEN) {
+                                popUpTo(Route.LOGIN) { inclusive = true }
+                            }
                         }
                     }
                 }
@@ -154,44 +183,30 @@ fun GettingStarted(navController: NavController) {
                 }
             }
 
-            biometricResult?.let { result ->
-                // Handle side effects using LaunchedEffect
-                if (result is BiometricPromptManager.BiometricResult.AuthenticationSuccess) {
-                    LaunchedEffect(Unit) {
-                        navController.navigate(Route.DASHBOARD)
+        }
+    }
+}
 
-                    }
-                }
+@SuppressLint("ComposableNaming")
+@Composable
+fun trackScreen(name: String, analyticsViewModel: AnalyticsViewModel) {
+    DisposableEffect(Unit) {
+        onDispose {
+            val bundle = EventTracker.trackEvent("GettingStartedScreen", name)
+            analyticsViewModel.analytics.logEvent(FirebaseAnalytics.Event.SCREEN_VIEW, bundle)
+        }
+    }
+}
 
-                Text(
-                    text = when (result) {
-                        is BiometricPromptManager.BiometricResult.AuthenticationError -> {
-                            result.error
-                        }
 
-                        BiometricPromptManager.BiometricResult.AuthenticationFailed -> {
-                            "Authentication failed"
-                        }
 
-                        BiometricPromptManager.BiometricResult.AuthenticationNotSet -> {
-                            "Authentication not set"
-                        }
-
-                        BiometricPromptManager.BiometricResult.AuthenticationSuccess -> {
-                            "Authentication success"
-                        }
-
-                        BiometricPromptManager.BiometricResult.FeatureUnavailable -> {
-                            "Feature unavailable"
-                        }
-
-                        BiometricPromptManager.BiometricResult.HardwareUnavailable -> {
-                            "Hardware unavailable"
-                        }
-                    }
-                )
-
-            }
+@SuppressLint("ComposableNaming")
+@Composable
+fun trackEvent(name: String, analyticsViewModel: AnalyticsViewModel) {
+    DisposableEffect(Unit) {
+        onDispose {
+            val bundle = EventTracker.trackEvent("GettingStartedScreen", "GettingStarted")
+            analyticsViewModel.analytics.logEvent(FirebaseAnalytics.Event.SELECT_ITEM, bundle)
         }
     }
 }

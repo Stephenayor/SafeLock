@@ -4,6 +4,8 @@ import android.content.Context
 import android.net.Uri
 import android.util.Log
 import com.example.safelock.data.repository.DashBoardRepository
+import com.example.safelock.data.repository.database.dao.SaveImageDao
+import com.example.safelock.data.repository.database.entity.SaveImageEntity
 import com.example.safelock.data.repository.model.MediaData
 import com.example.safelock.utils.ApiResponse
 import com.example.safelock.utils.AppConstants
@@ -11,11 +13,15 @@ import com.example.safelock.utils.AppConstants.SAFELOCK_MEDIA_DATA
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 import java.util.UUID
 import javax.inject.Inject
 
@@ -23,6 +29,7 @@ class DashBoardRepositoryImpl @Inject constructor(
     private val firebaseStorage: FirebaseStorage,
     private val firebaseFireStore: FirebaseFirestore,
     @ApplicationContext private val context: Context,
+    private val saveImageDao: SaveImageDao
 ): DashBoardRepository {
 
     override suspend fun uploadImageToCloud(imageUri: Uri): Flow<ApiResponse<Uri>> = flow{
@@ -107,48 +114,31 @@ class DashBoardRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun saveImagesInDB(imageUrl: String, imageTitle: String) {
+        withContext(Dispatchers.IO) {
+          val saveImageEntity = SaveImageEntity(imageUrl, imageTitle)
+            saveImageDao.saveImages(saveImageEntity)
+        }
+    }
 
-    //    override suspend fun getMediaItems(): Flow<ApiResponse<List<MediaData>>> = flow {
-//        emit(ApiResponse.Loading)
-//        try {
-//            var items : List<MediaData> = mutableListOf()
-//            // Retrieve data from the FireStore collection
-//            val querySnapshot = firebaseFireStore.collection(SAFELOCK_MEDIA_DATA)
-//                .get()
-//                .await()
-//
-//            // Convert documents to a list of MediaData
-//            val mediaItems = querySnapshot.documents.map { document ->
-//                val dataImage = document.getString("dataImage") ?: ""
-//                val dataTitle = document.getString("dataTitle") ?: ""
-//                MediaData(
-//                    dataImage = dataImage,
-//                    dataTitle = dataTitle
-//                )
-//            }
-//
-//            emit(ApiResponse.Success(mediaItems))
-//
-////            firebaseFireStore.collection(SAFELOCK_MEDIA_DATA)
-////                .addSnapshotListener { querySnapshot, error ->
-////
-////                    if (querySnapshot != null && !querySnapshot.isEmpty) {
-////                        val mediaItems = querySnapshot.documents.map { document ->
-////                            val dataImage = document.getString("dataImage") ?: ""
-////                            val dataTitle = document.getString("dataTitle") ?: ""
-////                            MediaData(
-////                                dataImage = dataImage,
-////                                dataTitle = dataTitle
-////                            )
-////                        }
-////                       items = mediaItems
-////                    }
-////                }
-////            emit(ApiResponse.Success(items))
-//        } catch (e: Exception) {
-//            emit(ApiResponse.Failure(e))
-//        }
-//    }
+
+
+
+    override suspend fun getSavedImages(): Flow<ApiResponse<List<SaveImageEntity>>> = callbackFlow {
+        send(ApiResponse.Loading)
+
+        val job = CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val savedImages = saveImageDao.getSavedImages()
+                trySend(ApiResponse.Success(savedImages))
+            } catch (exception: Exception) {
+                trySend(ApiResponse.Failure(exception))
+            }
+        }
+
+        awaitClose { job.cancel() }
+    }
+
 
 
 }

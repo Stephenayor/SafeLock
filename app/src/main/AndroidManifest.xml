@@ -4,23 +4,26 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="com.google.android.providers.gsf.permission.READ_GSERVICES" />
-    <!-- Request legacy Bluetooth permissions on older devices. -->
-    <uses-permission android:name="android.permission.BLUETOOTH"
+    <uses-permission android:name="com.google.android.providers.gsf.permission.READ_GSERVICES" /> <!-- Request legacy Bluetooth permissions on older devices. -->
+    <uses-permission
+        android:name="android.permission.BLUETOOTH"
         android:maxSdkVersion="30" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
-    <uses-feature android:name="android.hardware.bluetooth" android:required="true"/>
 
-    <!-- Needed only if your app uses Bluetooth scan results to derive
-         physical location. -->
+    <uses-feature
+        android:name="android.hardware.bluetooth"
+        android:required="true" />
+    <!--
+ Needed only if your app uses Bluetooth scan results to derive
+         physical location.
+    -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-
 
     <application
         android:name=".utils.MyApp"
@@ -33,10 +36,13 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.SafeLock"
         tools:targetApi="31">
+        <activity android:name=".presentation.securemedia.SecureMediaActivity"
+            android:theme="@style/Theme.AppCompat">
+        </activity>
         <activity
             android:name=".presentation.biometrics.BiometricsActivity"
-            android:theme="@style/Theme.SafeLock.AppCompat"
-            android:exported="false" />
+            android:exported="false"
+            android:theme="@style/Theme.SafeLock.AppCompat" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -56,10 +62,6 @@
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
-
-
     </application>
-
-
 
 </manifest>

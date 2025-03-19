@@ -1,15 +1,16 @@
 package com.example.safelock.navigation
 
+import SplashScreen
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.safelock.presentation.SplashScreen
+import com.example.safelock.presentation.SecuredMedia
 import com.example.safelock.presentation.biometrics.SetupBiometricsScreen
 import com.example.safelock.presentation.dashboard.DashBoardScreen
+import com.example.safelock.presentation.home.HomeScreen
 import com.example.safelock.presentation.login.LoginScreen
 import com.example.safelock.presentation.onboarding.GettingStarted
 import com.example.safelock.presentation.onboarding.SignUpScreen
@@ -39,7 +40,14 @@ fun Navigation() {
             )
         }
         composable(Route.DASHBOARD){
-           DashBoardScreen()
+           DashBoardScreen(modifier = Modifier, navController)
+        }
+        composable(Route.SECURED_MEDIA){
+            val activity = AppCompatActivity()
+            SecuredMedia(modifier = Modifier, navController, activity)
+        }
+        composable(Route.HOME_SCREEN){
+            HomeScreen(modifier = Modifier, navController)
         }
         composable("biometricsauthenticationdialog"){
             BiometricsAuthenticationDialog(modifier = Modifier,"", onCancelBiometricsDialog = {})

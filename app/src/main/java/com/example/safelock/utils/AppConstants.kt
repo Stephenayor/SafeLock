@@ -14,4 +14,5 @@ object AppConstants {
     const val SAFELOCK_MEDIA_VIDEOS = "SafeLockMediaVideos"
     const val SAFELOCK_MEDIA_DATA = "SAFELOCK_MEDIA_DATA"
     const val GENERAL = "general"
+    const val FEATURE_USAGE = "feature_usage"
 }

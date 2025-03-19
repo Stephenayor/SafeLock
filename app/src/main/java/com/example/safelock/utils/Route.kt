@@ -7,5 +7,7 @@ object Route {
     const val LOGIN = "Login"
     const val SETUP_BIOMETRICS = "setupBiometricsScreen"
     const val DASHBOARD = "DashBoard"
+    const val SECURED_MEDIA = "SecuredMedia"
+    const val HOME_SCREEN = "HomeScreen"
     const val BIOMETRICS_AUTH_DIALOG = "biometricsauthenticationdialog"
 }

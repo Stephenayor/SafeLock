@@ -7,6 +7,8 @@ import androidx.lifecycle.viewModelScope
 import com.example.safelock.data.repository.DashBoardRepository
 import com.example.safelock.data.repository.model.MediaData
 import com.example.safelock.utils.ApiResponse
+import com.example.safelock.utils.Firebase.EventTracker
+import com.google.firebase.analytics.FirebaseAnalytics
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,7 +17,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class DashBoardViewModel @Inject constructor(
-   private val dashBoardRepository: DashBoardRepository
+   private val dashBoardRepository: DashBoardRepository,
+    private val firebaseAnalytics: FirebaseAnalytics
 ): ViewModel(){
     private val _uploadImageState = MutableStateFlow<ApiResponse<Uri>>(ApiResponse.Idle)
     val uploadImage: StateFlow<ApiResponse<Uri>> = _uploadImageState
@@ -28,6 +31,10 @@ class DashBoardViewModel @Inject constructor(
 
     private val _mediaTitle = MutableStateFlow<String?>(null)
     val mediaTitle: StateFlow<String?> = _mediaTitle
+
+    init {
+        getAllMediaItems()
+    }
 
     fun clearLoadingState() {
         _uploadMediaDataState.value = ApiResponse.Idle
@@ -76,5 +83,11 @@ class DashBoardViewModel @Inject constructor(
 
     fun setMediaTitle(title: String) {
         _mediaTitle.value = title
+    }
+
+    fun logDashBoardScreenEvents(screenName: String, screenClass: String) {
+//        firebaseAnalytics.logEvent(FirebaseAnalytics.Event.SCREEN_VIEW, null)
+       val bundle =  EventTracker.trackEvent(screenName, screenClass)
+        firebaseAnalytics.logEvent("dashboard_feature_usage", bundle)
     }
 }

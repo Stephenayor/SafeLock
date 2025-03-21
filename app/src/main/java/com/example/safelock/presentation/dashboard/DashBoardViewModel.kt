@@ -20,8 +20,8 @@ class DashBoardViewModel @Inject constructor(
    private val dashBoardRepository: DashBoardRepository,
     private val firebaseAnalytics: FirebaseAnalytics
 ): ViewModel(){
-    private val _uploadImageState = MutableStateFlow<ApiResponse<Uri>>(ApiResponse.Idle)
-    val uploadImage: StateFlow<ApiResponse<Uri>> = _uploadImageState
+    private val _uploadImageVideoState = MutableStateFlow<ApiResponse<Uri>>(ApiResponse.Idle)
+    val uploadImageVideo: StateFlow<ApiResponse<Uri>> = _uploadImageVideoState
 
     private val _uploadMediaDataState = MutableStateFlow<ApiResponse<Boolean>>(ApiResponse.Idle)
     val uploadMediaDataState: StateFlow<ApiResponse<Boolean>> = _uploadMediaDataState
@@ -38,25 +38,25 @@ class DashBoardViewModel @Inject constructor(
 
     fun clearLoadingState() {
         _uploadMediaDataState.value = ApiResponse.Idle
-        _uploadImageState.value = ApiResponse.Idle
+        _uploadImageVideoState.value = ApiResponse.Idle
     }
 
 
 
     fun uploadImageToCloud(imageUri: Uri){
-        _uploadImageState.value = ApiResponse.Loading
+        _uploadImageVideoState.value = ApiResponse.Loading
         viewModelScope.launch {
             dashBoardRepository.uploadImageToCloud(imageUri).collect { response ->
-                _uploadImageState.value = response
+                _uploadImageVideoState.value = response
             }
         }
     }
 
     fun uploadVideoToCloud(videoUri: Uri){
-        _uploadImageState.value = ApiResponse.Loading
+        _uploadImageVideoState.value = ApiResponse.Loading
         viewModelScope.launch {
             dashBoardRepository.uploadVideoToCloud(videoUri).collect { response ->
-                _uploadImageState.value = response
+                _uploadImageVideoState.value = response
             }
         }
     }

@@ -4,13 +4,18 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
+import android.provider.MediaStore
 import android.util.Log
 import android.widget.Toast
+import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,6 +37,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AddCard
 import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LocationOn
@@ -54,6 +60,7 @@ import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
@@ -62,15 +69,18 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -82,12 +92,9 @@ import coil.compose.AsyncImage
 import com.example.safelock.R
 import com.example.safelock.data.repository.model.DrawerFeature
 import com.example.safelock.data.repository.model.MediaData
-import com.example.safelock.presentation.AnalyticsViewModel
 import com.example.safelock.presentation.analytics.ScreenUsageViewModel
-import com.example.safelock.presentation.biometrics.BiometricsActivity
 import com.example.safelock.presentation.securemedia.SecureMediaActivity
 import com.example.safelock.utils.ApiResponse
-import com.example.safelock.utils.AppConstants
 import com.example.safelock.utils.CustomLoadingBar
 import com.example.safelock.utils.Firebase.EventTracker
 import com.example.safelock.utils.Firebase.FirebaseAnalyticsEntryPoint
@@ -118,40 +125,47 @@ fun DashBoardScreen(
     val drawerFeatures = mapToDrawerFeatures(mostUsedScreens)
 //    val analytics = analyticsViewModel.analytics
     val analytics = baseViewModel.analytics
-    val uploadImageState by viewModel.uploadImage.collectAsState()
+    val uploadImageVideoState by viewModel.uploadImageVideo.collectAsState()
     val uploadMediaDataState by viewModel.uploadMediaDataState.collectAsState()
     val getAllMediaFiles by viewModel.getAllMediaItems.collectAsState()
-    var imageUriOnFirebaseCloudStorage: Uri?
+    var fileUriOnFirebaseCloudStorage: Uri?
     var mediaTitle: String? = ""
     var isLoading by remember { mutableStateOf(false) }
     var isLoadingForMediaFiles by remember { mutableStateOf(false) }
     var mediaUri: Uri? = null
 
 
-    // Launcher for Activity Result
-    val imagePickerLauncher = rememberLauncherForActivityResult(
+    // Launcher for Image Result
+    val pair = imagePickerLauncher(mediaTitle, viewModel, mediaUri)
+    val imagePickerLauncher = pair.first
+    mediaUri = pair.second
+
+    //Launcher for Video
+    val pickVideoIntent = Intent(Intent.ACTION_GET_CONTENT).apply {
+        type = "video/*"
+    }
+    val recordVideoIntent = Intent(MediaStore.ACTION_VIDEO_CAPTURE)
+
+
+    val videoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             val data = result.data
-            // Handle the selected image URI
-            val filePath = data?.getStringExtra(ImageSelectActivity.RESULT_FILE_PATH)
-            mediaTitle = filePath.let {
-                File(it.toString()).name
+            val videoUri: Uri? = data?.data
+            if (videoUri != null) {
+                // Proceed to upload
+                videoUri.path?.let {
+                    val videoName = File(it).name
+                    viewModel.setMediaTitle(videoName)
+                }
+                uploadImageVideoToCloudStorage(videoUri, viewModel, videoUri.path, true)
+            } else {
+                Log.d("Video selection", "Failed to get video URI")
             }
-            filePath?.let {
-                val fileName = File(it).name
-                viewModel.setMediaTitle(fileName)
-            }
-            val selectedImage = BitmapFactory.decodeFile(filePath)
-            val fileUri = Uri.fromFile(filePath?.let { File(it) })
-            mediaUri =  Uri.fromFile(filePath?.let { File(it) })
-            Log.d("URI", fileUri.toString())
-            uploadImageToCloud(fileUri, viewModel, filePath)
-        } else {
-            Log.d("Image selection Failed", "Failed to select image")
         }
     }
+
     val firebaseAnalytics = remember {
         EntryPointAccessors.fromActivity(
             context as Activity,
@@ -175,7 +189,8 @@ fun DashBoardScreen(
         drawerState = drawerState,
         drawerContent = {
             ModalDrawerSheet {
-                Text("Most Used Features",
+                Text(
+                    "Most Used Features",
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
 
@@ -201,7 +216,7 @@ fun DashBoardScreen(
                             Text(text = feature.screenName)
                         }
                     }
-                }else{
+                } else {
                     val drawerFeature = listOf(
                         DrawerFeature("DashBoard", Icons.Default.Home),
                         DrawerFeature("Secured Media", Icons.Default.Person),
@@ -229,115 +244,147 @@ fun DashBoardScreen(
             }
         }
     ) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        "Dashboard",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Text(
+                            "Dashboard",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = {
+                            scope.launch {
+                                drawerState.open()
+                            }
+                        }) {
+                            Icon(
+                                imageVector = Icons.Filled.Menu,
+                                contentDescription = "Menu"
+                            )
+                        }
+                    },
+                    actions = {
+                        FloatingActionButton(
+                            onClick = {
+
+                            },
+                            contentColor = Color.White
+                        ) {
+                            TextButton(onClick = {
+                                // Create a chooser combining both
+                                val chooser = Intent.createChooser(
+                                    pickVideoIntent,
+                                    "Select or Record a Video"
+                                )
+                                chooser.putExtra(
+                                    Intent.EXTRA_INITIAL_INTENTS,
+                                    arrayOf(recordVideoIntent)
+                                )
+
+                                // Launch the chooser
+                                videoPickerLauncher.launch(chooser)
+
+                            }) {
+                                Icon(
+                                    imageVector = Icons.Filled.AddCard,
+                                    contentDescription = "Add Video",
+                                )
+                                Text("Add Video")
+                            }
+                        }
+                    },
+                    modifier = Modifier.windowInsetsPadding(WindowInsets.statusBars),
+                )
+                baseViewModel.onScreenViewed("DashBoard")
+            },
+            floatingActionButton = {
+                FloatingActionButton(
+                    onClick = {
+                        val bundle = EventTracker.trackEvent("DASHBOARD SCREEN", "DashBoardScreen")
+                        analytics.logEvent("floating_action_button_click", bundle)
+                        val intent = Intent(context, ImageSelectActivity::class.java).apply {
+                            putExtra(ImageSelectActivity.FLAG_COMPRESS, false)
+                            putExtra(ImageSelectActivity.FLAG_CAMERA, true)
+                            putExtra(ImageSelectActivity.FLAG_GALLERY, true)
+                            putExtra(ImageSelectActivity.FLAG_CROP, false)
+                        }
+                        imagePickerLauncher.launch(intent)
+                    },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Add,
+                        contentDescription = "Add"
                     )
-                },
-                navigationIcon = {
-                    IconButton(onClick = {
-                        scope.launch { drawerState.open()
-                    } }) {
-                        Icon(
-                            imageVector = Icons.Filled.Menu,
-                            contentDescription = "Menu"
+                }
+            },
+            floatingActionButtonPosition = FabPosition.End
+        ) { paddingValues ->
+            Box(
+                modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight()
+                    .padding(paddingValues)
+                    .padding(top = 5.dp)
+            ) {
+
+                when (val state = getAllMediaFiles) {
+                    is ApiResponse.Idle -> {
+                        // Do nothing; no feedback to the user yet
+                    }
+
+                    is ApiResponse.Loading -> {
+                        isLoadingForMediaFiles = true
+                    }
+
+                    is ApiResponse.Success -> {
+                        isLoadingForMediaFiles = false
+                        val mediaData = state.data
+                        if (mediaData != null) {
+                            MediaItemGridView(mediaData, mediaUri, baseViewModel, navController!!)
+                        }
+                    }
+
+                    is ApiResponse.Failure -> {
+                        isLoadingForMediaFiles = false
+                        Text(
+                            text = "Failed to load media files",
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.fillMaxSize(),
+                            textAlign = TextAlign.Center
                         )
                     }
-                },
-                modifier = Modifier.windowInsetsPadding(WindowInsets.statusBars),
-            )
-            baseViewModel.onScreenViewed("DashBoard")
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    val bundle = EventTracker.trackEvent("DASHBOARD SCREEN", "DashBoardScreen")
-                    analytics.logEvent("floating_action_button_click", bundle)
-                    val intent = Intent(context, ImageSelectActivity::class.java).apply {
-                        putExtra(ImageSelectActivity.FLAG_COMPRESS, false)
-                        putExtra(ImageSelectActivity.FLAG_CAMERA, true)
-                        putExtra(ImageSelectActivity.FLAG_GALLERY, true)
-                        putExtra(ImageSelectActivity.FLAG_CROP, false)
-                    }
-                    imagePickerLauncher.launch(intent)
-                },
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Add,
-                    contentDescription = "Add"
+                }
+
+            }
+            if (isLoading) {
+                CustomLoadingBar(
+                    "Uploading Data to Secured Space",
+                    imageResId = R.drawable.loading
+                )
+                viewModel.clearLoadingState()
+            }
+
+            if (isLoadingForMediaFiles) {
+                CustomLoadingBar(
+                    "Getting valuables",
+                    imageResId = R.drawable.loading
                 )
             }
-        },
-        floatingActionButtonPosition = FabPosition.End
-    ) { paddingValues ->
-        Box(
-            modifier
-                .fillMaxWidth()
-                .fillMaxHeight()
-                .padding(paddingValues)
-                .padding(top = 5.dp)
-        ) {
-
-            when (val state = getAllMediaFiles) {
-                is ApiResponse.Idle -> {
-                    // Do nothing; no feedback to the user yet
-                }
-
-                is ApiResponse.Loading -> {
-                    isLoadingForMediaFiles = true
-                }
-
-                is ApiResponse.Success -> {
-                    isLoadingForMediaFiles = false
-                    val mediaData = state.data
-                    if (mediaData != null) {
-                        MediaItemGridView(mediaData, mediaUri, baseViewModel, navController!!)
-                    }
-                }
-
-                is ApiResponse.Failure -> {
-                    isLoadingForMediaFiles = false
-                    Text(
-                        text = "Failed to load media files",
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.fillMaxSize(),
-                        textAlign = TextAlign.Center
-                    )
-                }
-            }
 
         }
-        if (isLoading) {
-            CustomLoadingBar(
-                "Uploading Data to Secured Space",
-                imageResId = R.drawable.loading
-            )
-            viewModel.clearLoadingState()
-        }
-
-        if (isLoadingForMediaFiles) {
-            CustomLoadingBar(
-                "Getting valuables",
-                imageResId = R.drawable.loading
-            )
-
-        }
-
-    }}
+    }
 
     Box(
         modifier = Modifier
             .fillMaxSize(),
-        contentAlignment = Alignment.Center // Centers content within the Box
+        contentAlignment = Alignment.Center
     ) {
-        when (val state = uploadImageState) {
+        when (val state = uploadImageVideoState) {
             is ApiResponse.Idle -> {
                 // Do nothing; no feedback to the user yet
             }
@@ -348,12 +395,12 @@ fun DashBoardScreen(
 
             is ApiResponse.Success -> {
                 isLoading = false
-                Tools.showToast(context, "Image Upload Successful")
-                imageUriOnFirebaseCloudStorage = state.data
-                    viewModel.uploadMediaDataToFireStoreDatabase(
-                        imageUriOnFirebaseCloudStorage!!,
-                        ""
-                    )
+                Tools.showToast(context, "Cloud Upload Successful")
+                fileUriOnFirebaseCloudStorage = state.data
+                viewModel.uploadMediaDataToFireStoreDatabase(
+                    fileUriOnFirebaseCloudStorage!!,
+                    ""
+                )
             }
 
             is ApiResponse.Failure -> {
@@ -373,7 +420,7 @@ fun DashBoardScreen(
         }
 
         is ApiResponse.Success -> {
-           isLoading = false
+            isLoading = false
             viewModel.getAllMediaItems
         }
 
@@ -385,32 +432,63 @@ fun DashBoardScreen(
 }
 
 
-fun uploadImageToCloud(
+@Composable
+private fun imagePickerLauncher(
+    mediaTitle: String?,
+    viewModel: DashBoardViewModel,
+    mediaUri: Uri?
+): Pair<ManagedActivityResultLauncher<Intent, ActivityResult>, Uri?> {
+    var mediaUri1 = mediaUri
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val data = result.data
+            // Handle the selected image URI
+            val filePath = data?.getStringExtra(ImageSelectActivity.RESULT_FILE_PATH)
+            filePath?.let {
+                val fileName = File(it).name
+                viewModel.setMediaTitle(fileName)
+            }
+            val selectedImage = BitmapFactory.decodeFile(filePath)
+            val fileUri = Uri.fromFile(filePath?.let { File(it) })
+            mediaUri1 = Uri.fromFile(filePath?.let { File(it) })
+            uploadImageVideoToCloudStorage(fileUri, viewModel, filePath, false)
+        } else {
+            Log.d("Image selection Failed", "Failed to select image")
+        }
+    }
+    return Pair(imagePickerLauncher, mediaUri1)
+}
+
+
+fun uploadImageVideoToCloudStorage(
     fileUri: Uri?,
     viewModel: DashBoardViewModel,
-    filePath: String?
+    filePath: String?,
+    isVideo: Boolean
 ) {
-    if (fileUri.toString().contains(".png", ignoreCase = true) ||
-        fileUri.toString().contains(".jpeg", ignoreCase = true)
-        ){
+    if (!isVideo) {
         fileUri?.let { viewModel.uploadImageToCloud(it) }
-    }else{
+    } else {
         fileUri?.let { viewModel.uploadVideoToCloud(it) }
     }
 }
 
 @Composable
-fun MediaItemGridView(mediaItems: List<MediaData>, mediaUri: Uri?,
-                      baseViewModel: BaseViewModel, navController: NavController) {
+fun MediaItemGridView(
+    mediaItems: List<MediaData>, mediaUri: Uri?,
+    baseViewModel: BaseViewModel, navController: NavController
+) {
     LazyVerticalGrid(
         columns = GridCells.Adaptive(minSize = 130.dp), // 3 columns for a 3x3 grid
         modifier = Modifier
             .fillMaxSize()
-            .padding(8.dp)
-        ,
+            .padding(8.dp),
         contentPadding = PaddingValues(8.dp)
     ) {
         items(mediaItems) { mediaItem ->
+            Log.d("tittle", mediaItem.dataTitle.toString())
             UploadedItemView(
                 title = mediaItem.dataTitle.orEmpty(),
                 imageUrl = mediaItem.dataImage.orEmpty(),
@@ -434,7 +512,7 @@ fun UploadedItemView(
     baseViewModel: BaseViewModel,
     navController: NavController
 ) {
-    val biometricsLauncher = rememberLauncherForActivityResult(
+    rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult(),
         onResult = { result ->
             if (result.resultCode == Activity.RESULT_OK) {
@@ -457,21 +535,30 @@ fun UploadedItemView(
     ) {
         val context = LocalContext.current
         Column(modifier = Modifier.fillMaxSize()) {
-
-            // Image + Icons
             Box(
                 modifier = Modifier
                     .weight(1f) // Takes remaining space
                     .fillMaxWidth()
             ) {
+                val isVideo = (playIcon != null)
 
-                // Background image
-                AsyncImage(
-                    model = imageUrl,
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
+                if (isVideo) {
+                    Image(
+                        painter = painterResource(R.drawable.ic_video_placeholder),
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    // Background image
+                    AsyncImage(
+                        model = imageUrl,
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+
 
                 // Save button (top-right)
                 Card(
@@ -482,7 +569,7 @@ fun UploadedItemView(
                         .padding(4.dp)
                 ) {
                     IconButton(onClick = {
-                        baseViewModel.saveImagesInDB(imageUrl,title)
+                        baseViewModel.saveImagesInDB(imageUrl, title)
                         Tools.showToast(context, "Saved successfully")
                         val intent = Intent(context, SecureMediaActivity::class.java).apply {}
                         context.startActivity(intent)
@@ -500,10 +587,15 @@ fun UploadedItemView(
                 playIcon?.let { icon ->
                     Card(
                         shape = MaterialTheme.shapes.small,
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.error),
                         modifier = Modifier.align(Alignment.Center)
                     ) {
-                        IconButton(onClick = { /* Handle play */ }) {
+                        IconButton(onClick = {
+                            Tools.showToast(
+                                context, "You need to Save Video, " +
+                                        "before you can play"
+                            )
+                        }) {
                             Icon(
                                 imageVector = icon,
                                 contentDescription = "Play Button",
@@ -573,13 +665,11 @@ fun UploadedItemView(
 }
 
 
-
 fun shareMediaViaBluetooth(context: Context, uri: Uri, isImage: Boolean) {
     val shareIntent = Intent(Intent.ACTION_SEND).apply {
         type = if (isImage) "image/*" else "video/*"
         putExtra(Intent.EXTRA_STREAM, uri)
     }
-
     val packageManager = context.packageManager
     // Query all activities that can handle the share intent
     val activities = packageManager.queryIntentActivities(shareIntent, 0)
@@ -596,18 +686,13 @@ fun shareMediaViaBluetooth(context: Context, uri: Uri, isImage: Boolean) {
             Toast.makeText(context, "Error sharing via Bluetooth", Toast.LENGTH_SHORT).show()
         }
     } else {
-        Toast.makeText(context, "Bluetooth sharing is not available on this device", Toast.LENGTH_SHORT).show()
+        Toast.makeText(
+            context,
+            "Bluetooth sharing is not available on this device",
+            Toast.LENGTH_SHORT
+        ).show()
     }
 }
-
-
-
-@Composable
-private fun PickImageFromGallery() {
-
-}
-
-
 
 
 @Preview(showBackground = true)
@@ -625,10 +710,13 @@ fun DashBoardScreenPreview(modifier: Modifier = Modifier) {
     }
 }
 
+
 @SuppressLint("ComposableNaming")
 @Composable
-fun trackScreen(screenName: String, screenClass: String,
-                baseViewModel: BaseViewModel) {
+fun trackScreen(
+    screenName: String, screenClass: String,
+    baseViewModel: BaseViewModel
+) {
     DisposableEffect(Unit) {
         onDispose {
             val bundle = EventTracker.trackEvent(screenName, screenClass)

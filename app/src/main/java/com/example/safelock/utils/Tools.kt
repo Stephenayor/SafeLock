@@ -1,6 +1,9 @@
 package com.example.safelock.utils
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.media.MediaMetadataRetriever
+import android.net.Uri
 import android.widget.Toast
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
@@ -27,6 +30,22 @@ class Tools {
                 DrawerFeature(usage.screenName, icon)
             }
         }
+
+        //Generate Video Thumbnail
+        fun getVideoThumbnail(context: Context, videoUri: Uri): Bitmap? {
+            val retriever = MediaMetadataRetriever()
+            return try {
+                retriever.setDataSource(context, videoUri)
+                // getFrameAtTime(0) returns the first frame
+                retriever.getFrameAtTime(0)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                null
+            } finally {
+                retriever.release()
+            }
+        }
+
 
     }
 }

@@ -11,5 +11,8 @@ data class SaveImageEntity(
     val imageUrl: String,
 
     @ColumnInfo(name = "imageTitle")
-    val imageTitle: String
+    val imageTitle: String,
+
+    @ColumnInfo(name = "isVideo")
+    val isVideo: Boolean
 )

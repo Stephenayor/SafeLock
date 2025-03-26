@@ -187,6 +187,8 @@ fun DashBoardScreen(
 
     ModalNavigationDrawer(
         drawerState = drawerState,
+        gesturesEnabled = true,
+        modifier = Modifier.fillMaxSize(),
         drawerContent = {
             ModalDrawerSheet {
                 Text(
@@ -291,8 +293,9 @@ fun DashBoardScreen(
                                 Icon(
                                     imageVector = Icons.Filled.AddCard,
                                     contentDescription = "Add Video",
+                                    tint = Color.White
                                 )
-                                Text("Add Video")
+                                Text("Add Video", color = Color.White)
                             }
                         }
                     },
@@ -313,8 +316,8 @@ fun DashBoardScreen(
                         }
                         imagePickerLauncher.launch(intent)
                     },
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.surfaceBright
                 ) {
                     Icon(
                         imageVector = Icons.Filled.Add,
@@ -363,7 +366,7 @@ fun DashBoardScreen(
             }
             if (isLoading) {
                 CustomLoadingBar(
-                    "Uploading Data to Secured Space",
+                    "Uploading to Secured Space",
                     imageResId = R.drawable.loading
                 )
                 viewModel.clearLoadingState()
@@ -569,9 +572,15 @@ fun UploadedItemView(
                         .padding(4.dp)
                 ) {
                     IconButton(onClick = {
-                        baseViewModel.saveImagesInDB(imageUrl, title)
+                        if (isVideo) {
+                            baseViewModel.saveImagesInDB(imageUrl, title, true)
+                        } else {
+                            baseViewModel.saveImagesInDB(imageUrl, title, false)
+                        }
                         Tools.showToast(context, "Saved successfully")
-                        val intent = Intent(context, SecureMediaActivity::class.java).apply {}
+                        val intent = Intent(context, SecureMediaActivity::class.java).apply {
+                            putExtra("navController", navController.toString())
+                        }
                         context.startActivity(intent)
                     }) {
                         Icon(

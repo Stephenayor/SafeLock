@@ -8,12 +8,14 @@ import androidx.security.crypto.MasterKey
 import com.example.safelock.data.repository.SignUpLoginRepository
 import com.example.safelock.data.repository.DashBoardRepository
 import com.example.safelock.data.repository.ScreenUsageRepository
+import com.example.safelock.data.repository.SecuredMediaRepository
 import com.example.safelock.data.repository.database.AppDatabase
 import com.example.safelock.data.repository.database.dao.SaveImageDao
 import com.example.safelock.data.repository.database.dao.ScreenUsageDao
 import com.example.safelock.domain.SignUpLoginRepositoryImpl
 import com.example.safelock.domain.DashBoardRepositoryImpl
 import com.example.safelock.domain.ScreenUsageRepositoryImpl
+import com.example.safelock.domain.SecuredMediaRepositoryImpl
 import com.example.safelock.utils.AppConstants
 import com.google.firebase.Firebase
 import com.google.firebase.analytics.FirebaseAnalytics
@@ -125,6 +127,12 @@ object AppModule {
     @Singleton
     fun provideScreenUsageRepository(screenUsageDao: ScreenUsageDao): ScreenUsageRepository {
         return ScreenUsageRepositoryImpl(screenUsageDao)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSecuredMediaRepository(saveImageDao: SaveImageDao): SecuredMediaRepository {
+        return SecuredMediaRepositoryImpl(saveImageDao)
     }
 
 

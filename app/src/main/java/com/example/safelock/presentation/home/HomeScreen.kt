@@ -32,12 +32,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.safelock.R
 import com.example.safelock.presentation.dashboard.DashBoardScreen
 import com.example.safelock.presentation.securemedia.SecureMediaActivity
 import com.example.safelock.utils.Route
+import com.example.safelock.utils.base.BaseViewModel
 
 @Composable
 fun HomeScreen(modifier: Modifier = Modifier,

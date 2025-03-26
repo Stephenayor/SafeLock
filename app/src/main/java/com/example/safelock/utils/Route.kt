@@ -9,5 +9,6 @@ object Route {
     const val DASHBOARD = "DashBoard"
     const val SECURED_MEDIA = "SecuredMedia"
     const val HOME_SCREEN = "HomeScreen"
+    const val VIDEO_PLAYER_SCREEN = "VideoPlayerScreen"
     const val BIOMETRICS_AUTH_DIALOG = "biometricsauthenticationdialog"
 }

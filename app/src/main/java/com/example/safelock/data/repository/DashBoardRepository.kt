@@ -17,6 +17,6 @@ interface DashBoardRepository {
 
     suspend fun getMediaItems(): Flow<ApiResponse<List<MediaData>>>
 
-    suspend fun saveImagesInDB(imageUrl: String, imageTitle: String)
+    suspend fun saveImagesInDB(imageUrl: String, imageTitle: String, isVideo: Boolean)
     suspend fun getSavedImages(): Flow<ApiResponse<List<SaveImageEntity>>>
 }

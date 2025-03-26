@@ -13,7 +13,7 @@ import com.example.safelock.data.repository.database.entity.ScreenUsageEntity
 
 @Database(
     entities = [ScreenUsageEntity::class, SaveImageEntity::class],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -36,6 +36,15 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_2_3: Migration = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Add a new column "isVideo" to the saved_image table.
+                // INTEGER is used to represent Boolean values (0 = false, 1 = true).
+                db.execSQL("ALTER TABLE saved_image ADD COLUMN isVideo INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
+
 
         fun getInstance(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
@@ -44,7 +53,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "safelock_app_db"
                 )
-                    .addMigrations(MIGRATION_1_2)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                     .build()
                 INSTANCE = instance
                 instance

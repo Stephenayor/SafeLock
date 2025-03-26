@@ -125,5 +125,10 @@ dependencies {
     implementation libs.androidx.foundation.layout
     implementation libs.androidx.animation
 
+    //ExoPlayer
+    implementation 'com.google.android.exoplayer:exoplayer:2.18.1'
+    implementation 'com.google.android.exoplayer:exoplayer-ui:2.18.1'
+
+
 
 }

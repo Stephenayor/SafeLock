@@ -72,7 +72,7 @@ class DashBoardViewModel @Inject constructor(
         }
     }
 
-    fun getAllMediaItems(){
+    private fun getAllMediaItems(){
         _getAllMediaItems.value = ApiResponse.Loading
         viewModelScope.launch {
             dashBoardRepository.getMediaItems().collect { response ->

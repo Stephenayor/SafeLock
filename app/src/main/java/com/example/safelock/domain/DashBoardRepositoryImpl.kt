@@ -114,9 +114,9 @@ class DashBoardRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun saveImagesInDB(imageUrl: String, imageTitle: String) {
+    override suspend fun saveImagesInDB(imageUrl: String, imageTitle: String, isVideo: Boolean) {
         withContext(Dispatchers.IO) {
-          val saveImageEntity = SaveImageEntity(imageUrl, imageTitle)
+          val saveImageEntity = SaveImageEntity(imageUrl, imageTitle, isVideo)
             saveImageDao.saveImages(saveImageEntity)
         }
     }
@@ -126,7 +126,6 @@ class DashBoardRepositoryImpl @Inject constructor(
 
     override suspend fun getSavedImages(): Flow<ApiResponse<List<SaveImageEntity>>> = callbackFlow {
         send(ApiResponse.Loading)
-
         val job = CoroutineScope(Dispatchers.IO).launch {
             try {
                 val savedImages = saveImageDao.getSavedImages()

@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.NavController
 import com.example.safelock.data.repository.DashBoardRepository
 import com.example.safelock.data.repository.ScreenUsageRepository
 import com.example.safelock.data.repository.database.entity.SaveImageEntity
@@ -18,7 +19,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class BaseViewModel @Inject constructor(
+open class BaseViewModel @Inject constructor(
     val analytics: FirebaseAnalytics,
     private val screenUsageRepository: ScreenUsageRepository,
     private val dashBoardRepository: DashBoardRepository
@@ -50,9 +51,9 @@ class BaseViewModel @Inject constructor(
         }
     }
 
-    fun saveImagesInDB(imageUrl: String, imageTitle: String) {
+    fun saveImagesInDB(imageUrl: String, imageTitle: String, isVideo: Boolean) {
         viewModelScope.launch {
-            dashBoardRepository.saveImagesInDB(imageUrl, imageTitle)
+            dashBoardRepository.saveImagesInDB(imageUrl, imageTitle, isVideo)
         }
     }
 
@@ -85,5 +86,7 @@ class BaseViewModel @Inject constructor(
     fun getPromptManager(): NewBiometricPromptManagerClass {
         return promptManager
     }
+
+    lateinit var appNavigationController: NavController
 
 }

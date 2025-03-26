@@ -17,4 +17,12 @@ interface SaveImageDao {
 
     @Query("SELECT * FROM saved_image")
     suspend fun getSavedImages(): List<SaveImageEntity>
+
+    // Delete a single image by its title
+    @Query("DELETE FROM saved_image WHERE imageTitle = :title")
+    suspend fun deleteImageByTitle(title: String)
+
+    // Delete all images
+    @Query("DELETE FROM saved_image")
+    suspend fun deleteAllImages()
 }

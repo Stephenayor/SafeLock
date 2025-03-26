@@ -58,7 +58,9 @@ import com.example.safelock.utils.AppConstants
 import com.example.safelock.utils.Tools
 import com.example.safelock.utils.biometrics.BiometricPromptManager
 import com.google.firebase.Firebase
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.auth
 import com.google.firebase.firestore.firestore
 import dagger.hilt.android.AndroidEntryPoint
 import java.util.UUID
@@ -73,6 +75,8 @@ class BiometricsActivity : AppCompatActivity() {
     private val loginViewModel: LoginViewModel by viewModels()
     private lateinit var userId: String
     private  var isFromGettingStarted: Boolean? = false
+    private  var isAuthenticated : Boolean = false
+    private lateinit var firebaseAuth: FirebaseAuth
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -85,6 +89,9 @@ class BiometricsActivity : AppCompatActivity() {
                 ) {
                     userId  = intent.getStringExtra(AppConstants.USER_UID).toString()
                     isFromGettingStarted = intent.getBooleanExtra(AppConstants.GETTING_STARTED, false)
+                    isAuthenticated = intent.
+                    getBooleanExtra("LoginSuccessful", false)
+                    Log.d("biometrics", userId)
                     val biometricResult by promptManager.promptResults.collectAsState(
                         initial = null
                     )
@@ -223,8 +230,15 @@ class BiometricsActivity : AppCompatActivity() {
                             }
 
                             if (result is BiometricPromptManager.BiometricResult.AuthenticationError) {
-                                Tools.showToast(LocalContext.current, result.error)
-                                finish()
+                                if (isAuthenticated){
+                                    firebaseAuth = Firebase.auth
+                                    firebaseAuth.signOut()
+                                    Tools.showToast(LocalContext.current, result.error)
+                                    finish()
+                                }else {
+                                    Tools.showToast(LocalContext.current, result.error)
+                                    finish()
+                                }
                             }
 
 

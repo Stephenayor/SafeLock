@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
@@ -41,6 +40,7 @@ import androidx.compose.material.icons.filled.AddCard
 import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
@@ -69,14 +69,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -103,10 +101,12 @@ import com.example.safelock.utils.Tools
 import com.example.safelock.utils.Tools.Companion.mapToDrawerFeatures
 import com.example.safelock.utils.base.BaseViewModel
 import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.EntryPointAccessors
 import `in`.mayanknagwanshi.imagepicker.ImageSelectActivity
 import kotlinx.coroutines.launch
 import java.io.File
+import javax.inject.Inject
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -133,7 +133,7 @@ fun DashBoardScreen(
     var isLoading by remember { mutableStateOf(false) }
     var isLoadingForMediaFiles by remember { mutableStateOf(false) }
     var mediaUri: Uri? = null
-
+    val firebaseAuth = hiltViewModel<DashBoardViewModel>().firebaseAuth
 
     // Launcher for Image Result
     val pair = imagePickerLauncher(mediaTitle, viewModel, mediaUri)
@@ -242,6 +242,34 @@ fun DashBoardScreen(
                             Text(text = feature.screenName)
                         }
                     }
+                }
+
+                // Spacer to push logout to the bottom
+                Spacer(modifier = Modifier.weight(1f))
+
+                // Logout row
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            firebaseAuth.signOut()
+                            navController?.navigate(Route.SPLASH_SCREEN) {
+                                popUpTo("Splash screen") { inclusive = true }
+                            }
+                        }
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Logout,
+                        contentDescription = "Logout",
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Logout",
+                        color = MaterialTheme.colorScheme.error
+                    )
                 }
             }
         }
@@ -545,22 +573,29 @@ fun UploadedItemView(
             ) {
                 val isVideo = (playIcon != null)
 
-                if (isVideo) {
-                    Image(
-                        painter = painterResource(R.drawable.ic_video_placeholder),
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                } else {
-                    // Background image
-                    AsyncImage(
-                        model = imageUrl,
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
+//                if (isVideo) {
+//                    Image(
+//                        painter = painterResource(R.drawable.ic_video_placeholder),
+//                        contentDescription = null,
+//                        contentScale = ContentScale.Crop,
+//                        modifier = Modifier.fillMaxSize()
+//                    )
+//                } else {
+//                    // Background image
+//                    AsyncImage(
+//                        model = imageUrl,
+//                        contentDescription = null,
+//                        contentScale = ContentScale.Crop,
+//                        modifier = Modifier.fillMaxSize()
+//                    )
+//                }
+
+                AsyncImage(
+                    model = imageUrl,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
 
 
                 // Save button (top-right)
@@ -596,7 +631,7 @@ fun UploadedItemView(
                 playIcon?.let { icon ->
                     Card(
                         shape = MaterialTheme.shapes.small,
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.error),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
                         modifier = Modifier.align(Alignment.Center)
                     ) {
                         IconButton(onClick = {
@@ -606,10 +641,10 @@ fun UploadedItemView(
                             )
                         }) {
                             Icon(
-                                imageVector = icon,
-                                contentDescription = "Play Button",
+                                painter = painterResource(R.drawable.iconsvideo),
+                                contentDescription = "Save Button",
                                 tint = Color.White,
-                                modifier = Modifier.size(40.dp)
+                                modifier = Modifier.size(30.dp)
                             )
                         }
                     }

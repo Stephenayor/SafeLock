@@ -6,6 +6,7 @@ import android.hardware.biometrics.BiometricManager.Authenticators.BIOMETRIC_STR
 import android.hardware.biometrics.BiometricManager.Authenticators.DEVICE_CREDENTIAL
 import android.os.Build
 import android.provider.Settings
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -79,8 +80,8 @@ fun LoginScreen(
             if (result.resultCode == Activity.RESULT_OK) {
                 val isSuccess = result.data?.getBooleanExtra("AUTH_SUCCESS", false) ?: false
                 if (isSuccess) {
-                    navController?.navigate(Route.HOME_SCREEN){
-                        popUpTo(Route.LOGIN){inclusive = true}
+                    navController?.navigate(Route.HOME_SCREEN) {
+                        popUpTo(Route.LOGIN) { inclusive = true }
                     }
                 }
             }
@@ -236,9 +237,11 @@ fun LoginScreen(
                         isLoading = false
                         viewModel.saveUserEmail(AppConstants.MAIL, email)
                         viewModel.saveUserPassword(AppConstants.PASSWORD, password)
+                        Log.d("Login", currentUser?.uid.toString())
                         // Launch BiometricsActivity
                         val intent = Intent(context, BiometricsActivity::class.java).apply {
                             putExtra(AppConstants.USER_UID, currentUser?.uid)
+                            putExtra("LoginSuccessful", true)
                         }
                         biometricsLauncher.launch(intent)
                     }
@@ -295,12 +298,12 @@ fun LoginScreen(
 //                                ) {
 //                                    navController?.navigate(Route.DASHBOARD)
 //                                }
-                                navController?.navigate(Route.HOME_SCREEN){
-                                    popUpTo(Route.LOGIN){inclusive = true}
+                                navController?.navigate(Route.HOME_SCREEN) {
+                                    popUpTo(Route.LOGIN) { inclusive = true }
                                 }
                             }
-                            navController?.navigate(Route.HOME_SCREEN){
-                                popUpTo(Route.LOGIN){inclusive = true}
+                            navController?.navigate(Route.HOME_SCREEN) {
+                                popUpTo(Route.LOGIN) { inclusive = true }
                             }
                         }
                     }

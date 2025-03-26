@@ -319,7 +319,7 @@ fun UploadedItemView(
                         modifier = Modifier.align(Alignment.Center)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.PlayArrow,
+                            painter = painterResource(R.drawable.iconsvideo),
                             contentDescription = "Play Video",
                             tint = Color.Red,
                             modifier = Modifier.size(40.dp)

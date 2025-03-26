@@ -9,6 +9,7 @@ import com.example.safelock.data.repository.model.MediaData
 import com.example.safelock.utils.ApiResponse
 import com.example.safelock.utils.Firebase.EventTracker
 import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,7 +19,8 @@ import javax.inject.Inject
 @HiltViewModel
 class DashBoardViewModel @Inject constructor(
    private val dashBoardRepository: DashBoardRepository,
-    private val firebaseAnalytics: FirebaseAnalytics
+    private val firebaseAnalytics: FirebaseAnalytics,
+   val firebaseAuth: FirebaseAuth
 ): ViewModel(){
     private val _uploadImageVideoState = MutableStateFlow<ApiResponse<Uri>>(ApiResponse.Idle)
     val uploadImageVideo: StateFlow<ApiResponse<Uri>> = _uploadImageVideoState

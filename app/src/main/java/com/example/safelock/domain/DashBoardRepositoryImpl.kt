@@ -10,6 +10,7 @@ import com.example.safelock.data.repository.model.MediaData
 import com.example.safelock.utils.ApiResponse
 import com.example.safelock.utils.AppConstants
 import com.example.safelock.utils.AppConstants.SAFELOCK_MEDIA_DATA
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -30,12 +31,14 @@ class DashBoardRepositoryImpl @Inject constructor(
     private val firebaseFireStore: FirebaseFirestore,
     @ApplicationContext private val context: Context,
     private val saveImageDao: SaveImageDao
-): DashBoardRepository {
+) : DashBoardRepository {
+    private lateinit var firebaseAuth: FirebaseAuth
 
-    override suspend fun uploadImageToCloud(imageUri: Uri): Flow<ApiResponse<Uri>> = flow{
+    override suspend fun uploadImageToCloud(imageUri: Uri): Flow<ApiResponse<Uri>> = flow {
         emit(ApiResponse.Loading)
         val firebaseStorageReference = firebaseStorage.reference
-        val imageStorageReference = firebaseStorageReference.child("SafeLockImages/${UUID.randomUUID()}.jpg")
+        val imageStorageReference =
+            firebaseStorageReference.child("SafeLockImages/${UUID.randomUUID()}.jpg")
         try {
             val imageDownloadUrl = imageStorageReference.child(AppConstants.SAFELOCK_MEDIA_IMAGES)
                 .putFile(imageUri).await()
@@ -47,10 +50,11 @@ class DashBoardRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun uploadVideoToCloud(videoUri: Uri): Flow<ApiResponse<Uri>> = flow{
+    override suspend fun uploadVideoToCloud(videoUri: Uri): Flow<ApiResponse<Uri>> = flow {
         emit(ApiResponse.Loading)
         val firebaseStorageReference = firebaseStorage.reference
-        val videoStorageReference = firebaseStorageReference.child("SafeLockVideos/${UUID.randomUUID()}.mp4")
+        val videoStorageReference =
+            firebaseStorageReference.child("SafeLockVideos/${UUID.randomUUID()}.mp4")
         try {
             val videoFileUrl = videoStorageReference.child(AppConstants.SAFELOCK_MEDIA_VIDEOS)
                 .putFile(videoUri).await()
@@ -65,63 +69,73 @@ class DashBoardRepositoryImpl @Inject constructor(
     override suspend fun uploadMediaDataToFireStore(
         imageDownloadUrl: Uri,
         mediaDataTitle: String
-    ): Flow<ApiResponse<Boolean>> = flow{
+    ): Flow<ApiResponse<Boolean>> = flow {
         emit(ApiResponse.Loading)
+        firebaseAuth = FirebaseAuth.getInstance()
         try {
-            val dataDetails = HashMap<String, Any>()
-            dataDetails["dataImage"] = imageDownloadUrl
-            dataDetails["dataTitle"] = mediaDataTitle
-            firebaseFireStore.collection(SAFELOCK_MEDIA_DATA).document()
+            val currentUserId = firebaseAuth.currentUser?.uid.orEmpty()
+            if (currentUserId.isEmpty()) {
+                emit(ApiResponse.Failure(Exception("User not logged in")))
+                return@flow
+            }
+            val dataDetails = hashMapOf(
+                "dataImage" to imageDownloadUrl.toString(),
+                "dataTitle" to mediaDataTitle
+            )
+            firebaseFireStore.collection(SAFELOCK_MEDIA_DATA)
+                .document(currentUserId)
                 .set(dataDetails)
                 .await()
+
             emit(ApiResponse.Success(true))
-            Log.d("UploadFirestore", "Successfully uploaded")
+            Log.d("UploadFirestore", "Successfully uploaded for user: $currentUserId")
         } catch (e: Exception) {
             emit(ApiResponse.Failure(e))
         }
     }
 
 
-
     override suspend fun getMediaItems(): Flow<ApiResponse<List<MediaData>>> = callbackFlow {
         send(ApiResponse.Loading)
 
+        firebaseAuth = FirebaseAuth.getInstance()
+        val currentUserId = firebaseAuth.currentUser?.uid.orEmpty()
+        if (currentUserId.isEmpty()) {
+            trySend(ApiResponse.Failure(Exception("User not logged in")))
+            close()
+            return@callbackFlow
+        }
+
         val listenerRegistration = firebaseFireStore.collection(SAFELOCK_MEDIA_DATA)
-            .addSnapshotListener { querySnapshot, error ->
+            .document(currentUserId)
+            .addSnapshotListener { documentSnapshot, error ->
                 if (error != null) {
                     trySend(ApiResponse.Failure(error)).isSuccess
                     return@addSnapshotListener
                 }
 
-                if (querySnapshot != null && !querySnapshot.isEmpty) {
-                    val mediaItems = querySnapshot.documents.map { document ->
+                documentSnapshot?.let { document ->
+                    if (document.exists()) {
                         val dataImage = document.getString("dataImage") ?: ""
                         val dataTitle = document.getString("dataTitle") ?: ""
-                        MediaData(
-                            dataImage = dataImage,
-                            dataTitle = dataTitle
-                        )
+                        val mediaItems = listOf(MediaData(dataImage, dataTitle))
+                        trySend(ApiResponse.Success(mediaItems)).isSuccess
+                    } else {
+                        trySend(ApiResponse.Success(emptyList())).isSuccess
                     }
-                    trySend(ApiResponse.Success(mediaItems)).isSuccess
-                } else {
-                    trySend(ApiResponse.Success(emptyList())).isSuccess
                 }
             }
 
-        // Ensure proper cleanup when the flow collector stops collecting
-        awaitClose {
-            listenerRegistration.remove()
-        }
+        awaitClose { listenerRegistration.remove() }
     }
+
 
     override suspend fun saveImagesInDB(imageUrl: String, imageTitle: String, isVideo: Boolean) {
         withContext(Dispatchers.IO) {
-          val saveImageEntity = SaveImageEntity(imageUrl, imageTitle, isVideo)
+            val saveImageEntity = SaveImageEntity(imageUrl, imageTitle, isVideo)
             saveImageDao.saveImages(saveImageEntity)
         }
     }
-
-
 
 
     override suspend fun getSavedImages(): Flow<ApiResponse<List<SaveImageEntity>>> = callbackFlow {
@@ -137,7 +151,6 @@ class DashBoardRepositoryImpl @Inject constructor(
 
         awaitClose { job.cancel() }
     }
-
 
 
 }

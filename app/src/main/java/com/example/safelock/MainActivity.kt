@@ -22,6 +22,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
 import com.example.safelock.navigation.Navigation
 import com.example.safelock.ui.theme.SafeLockTheme
+import com.example.safelock.utils.SessionTimeoutWrapper
 import com.example.safelock.utils.Tools
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -41,26 +42,30 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            SafeLockTheme {
-                CheckForNotificationPermission()
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                    Surface(modifier = Modifier.fillMaxSize(),
-                        color = MaterialTheme.colorScheme.background) {
-                        Box (modifier = Modifier.fillMaxSize()){
-                            Navigation()
+            SessionTimeoutWrapper {
+                SafeLockTheme {
+                    CheckForNotificationPermission()
+                    Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                        Greeting(
+                            name = "Android",
+                            modifier = Modifier.padding(innerPadding)
+                        )
+                        Surface(
+                            modifier = Modifier.fillMaxSize(),
+                            color = MaterialTheme.colorScheme.background
+                        ) {
+                            Box(modifier = Modifier.fillMaxSize()) {
+                                Navigation()
+                            }
+
                         }
 
                     }
 
+
                 }
 
-
             }
-
         }
     }
 

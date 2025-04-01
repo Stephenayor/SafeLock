@@ -1,9 +1,13 @@
 [versions]
+accompanistPermissions = "0.37.2"
 agp = "8.7.3"
 biometricVersion = "1.1.0"
 coilCompose = "2.2.2"
+coilComposeVersion = "3.1.0"
+coilVideo = "2.6.0"
 compressor = "2.1.1"
 converterMoshi = "2.9.0"
+exoplayer = "2.19.1"
 firebaseAuth = "23.1.0"
 firebaseBom = "33.7.0"
 firebaseDatabaseKtx = "21.0.0"
@@ -17,6 +21,9 @@ espressoCore = "3.6.1"
 lifecycleRuntimeKtx = "2.8.7"
 activityCompose = "1.9.3"
 composeBom = "2024.12.01"
+mapsCompose = "6.5.2"
+mapsComposeUtils = "6.5.2"
+mapsComposeWidgets = "6.5.2"
 materialIconsCore = "1.5.1"
 navigationRuntimeKtx = "2.8.5"
 navigationCompose = "2.8.5"
@@ -24,6 +31,7 @@ animationCoreLint = "1.8.0-alpha07"
 material3Lint = "1.4.0-alpha05"
 playServices = "17.0.0"
 playServicesAuth = "21.3.0"
+playServicesLocation = "21.3.0"
 retrofit = "2.9.0"
 roomKtx = "2.6.1"
 securityCrypto = "1.1.0-alpha06"
@@ -37,9 +45,11 @@ ui = "1.7.4"
 materialIconsExtended = "1.7.4"
 foundation = "1.7.4"
 animation = "1.7.5"
+coil3 = "3.0.0-alpha06"
 
 
 [libraries]
+accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanistPermissions" }
 androidx-animation = { module = "androidx.compose.animation:animation", version.ref = "animation" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-material-icons-core = { module = "androidx.compose.material:material-icons-core", version.ref = "materialIconsCore" }
@@ -50,8 +60,13 @@ androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "roomKtx"
 androidx-security-crypto = { module = "androidx.security:security-crypto", version.ref = "securityCrypto" }
 biometric = { module = "androidx.biometric:biometric", version.ref = "biometricVersion" }
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
+coil-network-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coilComposeVersion" }
+coil-video = { module = "io.coil-kt:coil-video", version.ref = "coilVideo" }
+coil3-coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coilComposeVersion" }
 compressor = { module = "id.zelory:compressor", version.ref = "compressor" }
 converter-moshi = { module = "com.squareup.retrofit2:converter-moshi", version.ref = "converterMoshi" }
+exoplayer = { module = "com.google.android.exoplayer:exoplayer", version.ref = "exoplayer" }
+exoplayer-ui = { module = "com.google.android.exoplayer:exoplayer-ui", version.ref = "exoplayer" }
 firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
 firebase-analytics-ktx = { module = "com.google.firebase:firebase-analytics-ktx" }
 firebase-auth = { module = "com.google.firebase:firebase-auth", version.ref = "firebaseAuth" }
@@ -82,16 +97,25 @@ androidx-material3-lint = { group = "androidx.compose.material3", name = "materi
 androidx-security-crypto-ktx = { group = "androidx.security", name = "securityCrypto", version.ref = "securityCryptoKtx" }
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinxCoroutinesAndroid" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+maps-compose = { module = "com.google.maps.android:maps-compose", version.ref = "mapsCompose" }
+maps-compose-utils = { module = "com.google.maps.android:maps-compose-utils", version.ref = "mapsComposeUtils" }
+maps-compose-widgets = { module = "com.google.maps.android:maps-compose-widgets", version.ref = "mapsComposeWidgets" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 androidx-activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
 androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
 play-services = { module = "com.google.android.gms:play-services", version.ref = "playServices" }
 play-services-auth = { module = "com.google.android.gms:play-services-auth", version.ref = "playServicesAuth" }
+play-services-location = { module = "com.google.android.gms:play-services-location", version.ref = "playServicesLocation" }
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
 ui = { module = "androidx.compose.ui:ui", version.ref = "ui" }
 androidx-material = { module = "androidx.compose.material:material", version.ref = "materialIconsExtended" }
 androidx-foundation = { module = "androidx.compose.foundation:foundation", version.ref = "foundation" }
 androidx-foundation-layout = { module = "androidx.compose.foundation:foundation-layout", version.ref = "foundation" }
+
+coil-composee = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil3" }
+coil-compose-core = { module = "io.coil-kt.coil3:coil-compose-core", version.ref = "coil3" }
+coil-network-ktor = { module = "io.coil-kt.coil3:coil-network-ktor", version.ref = "coil3" }
+coil-mp = { module = "io.coil-kt.coil3:coil", version.ref = "coil3" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

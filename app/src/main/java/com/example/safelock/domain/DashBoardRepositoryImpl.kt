@@ -84,7 +84,8 @@ class DashBoardRepositoryImpl @Inject constructor(
             )
             firebaseFireStore.collection(SAFELOCK_MEDIA_DATA)
                 .document(currentUserId)
-                .set(dataDetails)
+                .collection("media")
+                .add(dataDetails)
                 .await()
 
             emit(ApiResponse.Success(true))
@@ -108,21 +109,22 @@ class DashBoardRepositoryImpl @Inject constructor(
 
         val listenerRegistration = firebaseFireStore.collection(SAFELOCK_MEDIA_DATA)
             .document(currentUserId)
-            .addSnapshotListener { documentSnapshot, error ->
+            .collection("media")
+            .addSnapshotListener { querySnapshot, error ->
                 if (error != null) {
                     trySend(ApiResponse.Failure(error)).isSuccess
                     return@addSnapshotListener
                 }
 
-                documentSnapshot?.let { document ->
-                    if (document.exists()) {
+                if (querySnapshot != null && !querySnapshot.isEmpty) {
+                    val mediaItems = querySnapshot.documents.map { document ->
                         val dataImage = document.getString("dataImage") ?: ""
                         val dataTitle = document.getString("dataTitle") ?: ""
-                        val mediaItems = listOf(MediaData(dataImage, dataTitle))
-                        trySend(ApiResponse.Success(mediaItems)).isSuccess
-                    } else {
-                        trySend(ApiResponse.Success(emptyList())).isSuccess
+                        MediaData(dataImage, dataTitle)
                     }
+                    trySend(ApiResponse.Success(mediaItems)).isSuccess
+                } else {
+                    trySend(ApiResponse.Success(emptyList())).isSuccess
                 }
             }
 

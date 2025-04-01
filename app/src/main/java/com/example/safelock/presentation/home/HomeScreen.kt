@@ -12,6 +12,7 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.PermMedia
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.primarySurface
@@ -32,14 +33,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.safelock.R
 import com.example.safelock.presentation.dashboard.DashBoardScreen
+import com.example.safelock.presentation.location.LocationComposable
 import com.example.safelock.presentation.securemedia.SecureMediaActivity
 import com.example.safelock.utils.Route
-import com.example.safelock.utils.base.BaseViewModel
 
 @Composable
 fun HomeScreen(modifier: Modifier = Modifier,
@@ -61,7 +61,7 @@ fun HomeScreen(modifier: Modifier = Modifier,
             when (selectedTab) {
                 Screen.DashBoard -> DashBoardScreen(modifier, navController)
                 Screen.SecuredMedia -> SecureMediaActivity.start(LocalContext.current)
-                Screen.Profile -> ProfileScreen()
+                Screen.Location -> LocationComposable()
             }
         }
 
@@ -84,7 +84,7 @@ fun BottomNavigationBar(
         contentColor = Color.Blue
 
     ) {
-        val items = listOf(Screen.DashBoard, Screen.SecuredMedia, Screen.Profile)
+        val items = listOf(Screen.DashBoard, Screen.SecuredMedia, Screen.Location)
         items.forEach { screen ->
             if (Screen.SecuredMedia == screen){
                 BottomNavigationItem(
@@ -140,5 +140,5 @@ fun HomeScreenPreview() {
 sealed class Screen(val route: String, val label: String, val icon: ImageVector) {
     data object DashBoard : Screen(Route.DASHBOARD, "DashBoard", Icons.Filled.Home)
     data object SecuredMedia : Screen(Route.SECURED_MEDIA, "SecuredMedia", Icons.Filled.PermMedia)
-    data object Profile : Screen("profile", "Profile", Icons.Filled.Person)
+    data object Location : Screen(Route.LOCATION, "Location", Icons.Filled.LocationOn)
 }

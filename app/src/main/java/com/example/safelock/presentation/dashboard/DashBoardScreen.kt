@@ -15,6 +15,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,6 +35,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddCard
@@ -44,6 +46,7 @@ import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Card
@@ -55,6 +58,7 @@ import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
@@ -62,6 +66,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.contentColorFor
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -74,6 +79,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
@@ -86,7 +92,12 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import coil.ImageLoader
 import coil.compose.AsyncImage
+import coil.compose.rememberImagePainter
+import coil.decode.VideoFrameDecoder
+import coil.request.ImageRequest
+import coil.request.videoFrameMillis
 import com.example.safelock.R
 import com.example.safelock.data.repository.model.DrawerFeature
 import com.example.safelock.data.repository.model.MediaData
@@ -301,7 +312,8 @@ fun DashBoardScreen(
                             onClick = {
 
                             },
-                            contentColor = Color.White
+                            contentColor = Color.White,
+                            containerColor = MaterialTheme.colorScheme.primary
                         ) {
                             TextButton(onClick = {
                                 // Create a chooser combining both
@@ -344,7 +356,7 @@ fun DashBoardScreen(
                         }
                         imagePickerLauncher.launch(intent)
                     },
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.surfaceBright
                 ) {
                     Icon(
@@ -590,12 +602,39 @@ fun UploadedItemView(
 //                    )
 //                }
 
-                AsyncImage(
-                    model = imageUrl,
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
+                if (isVideo) {
+                    val context = LocalContext.current
+                    val model = ImageRequest.Builder(context)
+                        .data(mediaUri)
+                        .videoFrameMillis(10000)
+                        .decoderFactory { result, options, _ ->
+                            VideoFrameDecoder(
+                                result.source,
+                                options
+                            )
+                        }
+                        .build()
+                    AsyncImage(
+                        modifier = Modifier.fillMaxSize(),
+                        model = model,
+                        contentDescription = "video thumbnail",
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    AsyncImage(
+                        model = imageUrl,
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+
+//                AsyncImage(
+//                    model = imageUrl,
+//                    contentDescription = null,
+//                    contentScale = ContentScale.Crop,
+//                    modifier = Modifier.fillMaxSize()
+//                )
 
 
                 // Save button (top-right)
@@ -641,11 +680,11 @@ fun UploadedItemView(
                             )
                         }) {
                             Icon(
-                                painter = painterResource(R.drawable.iconsvideo),
-                                contentDescription = "Save Button",
-                                tint = Color.White,
-                                modifier = Modifier.size(30.dp)
-                            )
+                                Icons.Default.PlayCircle,
+                                contentDescription = "Play video icon",
+                                modifier = Modifier.size(30.dp),
+
+                                )
                         }
                     }
                 }

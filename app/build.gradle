@@ -60,6 +60,7 @@ dependencies {
     androidTestImplementation libs.androidx.ui.test.junit4
     debugImplementation libs.androidx.ui.tooling
     debugImplementation libs.androidx.ui.test.manifest
+    def coil_version = '2.6.0'
 
     //Navigation
     implementation libs.androidx.navigation.runtime.ktx
@@ -108,6 +109,7 @@ dependencies {
 
     //Coil compose
     implementation(libs.coil.compose)
+    implementation(libs.coil.video)
 
     //Retrofit
     implementation(libs.retrofit)
@@ -126,9 +128,19 @@ dependencies {
     implementation libs.androidx.animation
 
     //ExoPlayer
-    implementation 'com.google.android.exoplayer:exoplayer:2.18.1'
-    implementation 'com.google.android.exoplayer:exoplayer-ui:2.18.1'
+    implementation libs.exoplayer
+    implementation libs.exoplayer.ui
+
+    //Accompanist
+    implementation libs.accompanist.permissions
 
 
+    // Google Play Services Location for device location
+    implementation libs.play.services.location
 
+    // Google Maps Compose
+    implementation libs.maps.compose
+    // Street View metadata checks, etc.
+    implementation libs.maps.compose.utils
+    implementation libs.maps.compose.widgets
 }

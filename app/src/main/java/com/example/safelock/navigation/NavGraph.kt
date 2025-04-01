@@ -14,6 +14,7 @@ import com.example.safelock.presentation.securemedia.SecuredMedia
 import com.example.safelock.presentation.biometrics.SetupBiometricsScreen
 import com.example.safelock.presentation.dashboard.DashBoardScreen
 import com.example.safelock.presentation.home.HomeScreen
+import com.example.safelock.presentation.location.LocationComposable
 import com.example.safelock.presentation.login.LoginScreen
 import com.example.safelock.presentation.onboarding.GettingStarted
 import com.example.safelock.presentation.onboarding.SignUpScreen
@@ -53,6 +54,9 @@ fun Navigation() {
         }
         composable(Route.HOME_SCREEN){
             HomeScreen(modifier = Modifier, navController)
+        }
+        composable(Route.LOCATION){
+            LocationComposable()
         }
         composable("biometricsauthenticationdialog"){
             BiometricsAuthenticationDialog(modifier = Modifier,"", onCancelBiometricsDialog = {})

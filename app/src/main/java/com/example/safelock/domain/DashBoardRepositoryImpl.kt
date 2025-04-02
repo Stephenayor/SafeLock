@@ -43,7 +43,6 @@ class DashBoardRepositoryImpl @Inject constructor(
             val imageDownloadUrl = imageStorageReference.child(AppConstants.SAFELOCK_MEDIA_IMAGES)
                 .putFile(imageUri).await()
                 .storage.downloadUrl.await()
-            Log.d("image upload", "Upload successful")
             emit(ApiResponse.Success(imageDownloadUrl))
         } catch (e: Exception) {
             emit(ApiResponse.Failure(e))

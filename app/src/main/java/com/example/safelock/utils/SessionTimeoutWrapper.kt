@@ -11,7 +11,7 @@ import kotlinx.coroutines.delay
 
 @Composable
 fun SessionTimeoutWrapper(
-    timeoutMillis: Long = 10 * 60 * 10L, // 10 minutes
+    timeoutMillis: Long = 10 * 60 * 1000L, // 10 minutes
     content: @Composable () -> Unit
 ) {
     val lastActivityTime = remember { mutableLongStateOf(System.currentTimeMillis()) }

@@ -5,6 +5,7 @@ package com.example.safelock.presentation.location
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
+import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -40,8 +41,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.safelock.utils.Tools
 import com.example.safelock.utils.Tools.Companion.getCoordinatesFromAddress
+import com.example.safelock.utils.base.BaseViewModel
 import com.example.safelock.utils.getAddressFromLocation
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
@@ -75,6 +78,9 @@ fun LocationComposable() {
     var markerPosition by remember { mutableStateOf(LatLng(37.7749, -122.4194)) }
     var searchQuery by remember { mutableStateOf("") }
     var animateToNewLocation by remember { mutableStateOf(false) }
+
+    val baseViewModel: BaseViewModel = hiltViewModel()
+    baseViewModel.onScreenViewed("Location")
 
     // Request location permission on first composition.
     LaunchedEffect(Unit) {

@@ -56,7 +56,6 @@ fun HomeScreen(modifier: Modifier = Modifier,
             }
         }
     ) { innerPadding ->
-        // Content goes here based on selectedTab
         Box(modifier = Modifier.padding(innerPadding)){
             when (selectedTab) {
                 Screen.DashBoard -> DashBoardScreen(modifier, navController)

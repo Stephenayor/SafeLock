@@ -25,8 +25,8 @@ class DashBoardViewModel @Inject constructor(
     private val _uploadImageVideoState = MutableStateFlow<ApiResponse<Uri>>(ApiResponse.Idle)
     val uploadImageVideo: StateFlow<ApiResponse<Uri>> = _uploadImageVideoState
 
-    private val _uploadMediaDataState = MutableStateFlow<ApiResponse<Boolean>>(ApiResponse.Idle)
-    val uploadMediaDataState: StateFlow<ApiResponse<Boolean>> = _uploadMediaDataState
+    private val _uploadMediaDataStateFireStore = MutableStateFlow<ApiResponse<Boolean>>(ApiResponse.Idle)
+    val uploadMediaDataStateFireStore: StateFlow<ApiResponse<Boolean>> = _uploadMediaDataStateFireStore
 
     private val _getAllMediaItems = MutableStateFlow<ApiResponse<List<MediaData>>>(ApiResponse.Idle)
     val getAllMediaItems: StateFlow<ApiResponse<List<MediaData>>> = _getAllMediaItems
@@ -39,7 +39,11 @@ class DashBoardViewModel @Inject constructor(
     }
 
     fun clearLoadingState() {
-        _uploadMediaDataState.value = ApiResponse.Idle
+        _uploadMediaDataStateFireStore.value = ApiResponse.Idle
+        _uploadImageVideoState.value = ApiResponse.Idle
+    }
+
+    fun clearSuccessState() {
         _uploadImageVideoState.value = ApiResponse.Idle
     }
 
@@ -64,12 +68,12 @@ class DashBoardViewModel @Inject constructor(
     }
 
     fun uploadMediaDataToFireStoreDatabase(cloudImageUri: Uri, mediaTitle: String){
-        _uploadMediaDataState.value = ApiResponse.Loading
+        _uploadMediaDataStateFireStore.value = ApiResponse.Loading
         Log.d("mediaTitle inside viewmodel", _mediaTitle.value.toString())
         viewModelScope.launch {
             dashBoardRepository.uploadMediaDataToFireStore(cloudImageUri,
                 _mediaTitle.value!!).collect { response ->
-                _uploadMediaDataState.value = response
+                _uploadMediaDataStateFireStore.value = response
             }
         }
     }

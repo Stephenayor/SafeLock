@@ -14,8 +14,6 @@ import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,7 +33,6 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddCard
@@ -58,7 +55,6 @@ import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
@@ -66,7 +62,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.contentColorFor
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -79,22 +74,21 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import coil.ImageLoader
 import coil.compose.AsyncImage
-import coil.compose.rememberImagePainter
 import coil.decode.VideoFrameDecoder
 import coil.request.ImageRequest
 import coil.request.videoFrameMillis
@@ -112,12 +106,10 @@ import com.example.safelock.utils.Tools
 import com.example.safelock.utils.Tools.Companion.mapToDrawerFeatures
 import com.example.safelock.utils.base.BaseViewModel
 import com.google.firebase.analytics.FirebaseAnalytics
-import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.EntryPointAccessors
 import `in`.mayanknagwanshi.imagepicker.ImageSelectActivity
 import kotlinx.coroutines.launch
 import java.io.File
-import javax.inject.Inject
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -136,12 +128,13 @@ fun DashBoardScreen(
     val drawerFeatures = mapToDrawerFeatures(mostUsedScreens)
 //    val analytics = analyticsViewModel.analytics
     val analytics = baseViewModel.analytics
-    val uploadImageVideoState by viewModel.uploadImageVideo.collectAsState()
-    val uploadMediaDataState by viewModel.uploadMediaDataState.collectAsState()
+    val uploadImageOrVideoUriCloud by viewModel.uploadImageVideo.collectAsState()
+    val uploadMediaDataFireStoreDatabase by viewModel.uploadMediaDataStateFireStore.collectAsState()
     val getAllMediaFiles by viewModel.getAllMediaItems.collectAsState()
     var fileUriOnFirebaseCloudStorage: Uri?
     var mediaTitle: String? = ""
     var isLoading by remember { mutableStateOf(false) }
+    var isCloudUpload by remember { mutableStateOf(false) }
     var isLoadingForMediaFiles by remember { mutableStateOf(false) }
     var mediaUri: Uri? = null
     val firebaseAuth = hiltViewModel<DashBoardViewModel>().firebaseAuth
@@ -170,7 +163,7 @@ fun DashBoardScreen(
                     val videoName = File(it).name
                     viewModel.setMediaTitle(videoName)
                 }
-                uploadImageVideoToCloudStorage(videoUri, viewModel, videoUri.path, true)
+                uploadImageOrVideoToCloudStorage(videoUri, viewModel, videoUri.path, true)
             } else {
                 Log.d("Video selection", "Failed to get video URI")
             }
@@ -325,7 +318,6 @@ fun DashBoardScreen(
                                     Intent.EXTRA_INITIAL_INTENTS,
                                     arrayOf(recordVideoIntent)
                                 )
-
                                 // Launch the chooser
                                 videoPickerLauncher.launch(chooser)
 
@@ -390,6 +382,21 @@ fun DashBoardScreen(
                         if (mediaData != null) {
                             MediaItemGridView(mediaData, mediaUri, baseViewModel, navController!!)
                         }
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (mediaData?.isEmpty() == true) {
+                                Text(
+                                    "Upload your items here",
+                                    style = TextStyle(
+                                        fontStyle = FontStyle.Italic,
+                                        fontSize = 20.sp
+                                    ),
+                                    color = Color.Blue
+                                )
+                            }
+                        }
                     }
 
                     is ApiResponse.Failure -> {
@@ -427,7 +434,7 @@ fun DashBoardScreen(
             .fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        when (val state = uploadImageVideoState) {
+        when (val state = uploadImageOrVideoUriCloud) {
             is ApiResponse.Idle -> {
                 // Do nothing; no feedback to the user yet
             }
@@ -440,10 +447,12 @@ fun DashBoardScreen(
                 isLoading = false
                 Tools.showToast(context, "Cloud Upload Successful")
                 fileUriOnFirebaseCloudStorage = state.data
+                isCloudUpload = true
                 viewModel.uploadMediaDataToFireStoreDatabase(
                     fileUriOnFirebaseCloudStorage!!,
                     ""
                 )
+                viewModel.clearSuccessState()
             }
 
             is ApiResponse.Failure -> {
@@ -453,7 +462,7 @@ fun DashBoardScreen(
     }
 
 
-    when (val state = uploadMediaDataState) {
+    when (val state = uploadMediaDataFireStoreDatabase) {
         is ApiResponse.Idle -> {
             // Do nothing; no feedback to the user yet
         }
@@ -487,7 +496,6 @@ private fun imagePickerLauncher(
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             val data = result.data
-            // Handle the selected image URI
             val filePath = data?.getStringExtra(ImageSelectActivity.RESULT_FILE_PATH)
             filePath?.let {
                 val fileName = File(it).name
@@ -496,7 +504,7 @@ private fun imagePickerLauncher(
             val selectedImage = BitmapFactory.decodeFile(filePath)
             val fileUri = Uri.fromFile(filePath?.let { File(it) })
             mediaUri1 = Uri.fromFile(filePath?.let { File(it) })
-            uploadImageVideoToCloudStorage(fileUri, viewModel, filePath, false)
+            uploadImageOrVideoToCloudStorage(fileUri, viewModel, filePath, false)
         } else {
             Log.d("Image selection Failed", "Failed to select image")
         }
@@ -505,12 +513,15 @@ private fun imagePickerLauncher(
 }
 
 
-fun uploadImageVideoToCloudStorage(
+fun uploadImageOrVideoToCloudStorage(
     fileUri: Uri?,
     viewModel: DashBoardViewModel,
     filePath: String?,
     isVideo: Boolean
+
 ) {
+    Log.d("cloud", "here")
+
     if (!isVideo) {
         fileUri?.let { viewModel.uploadImageToCloud(it) }
     } else {
@@ -531,7 +542,6 @@ fun MediaItemGridView(
         contentPadding = PaddingValues(8.dp)
     ) {
         items(mediaItems) { mediaItem ->
-            Log.d("tittle", mediaItem.dataTitle.toString())
             UploadedItemView(
                 title = mediaItem.dataTitle.orEmpty(),
                 imageUrl = mediaItem.dataImage.orEmpty(),
@@ -569,7 +579,6 @@ fun UploadedItemView(
 
     Card(
         shape = MaterialTheme.shapes.medium,
-        // Slightly opaque background if needed; you can also use a different color
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         modifier = Modifier
             .fillMaxWidth()
@@ -585,25 +594,7 @@ fun UploadedItemView(
             ) {
                 val isVideo = (playIcon != null)
 
-//                if (isVideo) {
-//                    Image(
-//                        painter = painterResource(R.drawable.ic_video_placeholder),
-//                        contentDescription = null,
-//                        contentScale = ContentScale.Crop,
-//                        modifier = Modifier.fillMaxSize()
-//                    )
-//                } else {
-//                    // Background image
-//                    AsyncImage(
-//                        model = imageUrl,
-//                        contentDescription = null,
-//                        contentScale = ContentScale.Crop,
-//                        modifier = Modifier.fillMaxSize()
-//                    )
-//                }
-
                 if (isVideo) {
-                    val context = LocalContext.current
                     val model = ImageRequest.Builder(context)
                         .data(mediaUri)
                         .videoFrameMillis(10000)
@@ -628,13 +619,6 @@ fun UploadedItemView(
                         modifier = Modifier.fillMaxSize()
                     )
                 }
-
-//                AsyncImage(
-//                    model = imageUrl,
-//                    contentDescription = null,
-//                    contentScale = ContentScale.Crop,
-//                    modifier = Modifier.fillMaxSize()
-//                )
 
 
                 // Save button (top-right)

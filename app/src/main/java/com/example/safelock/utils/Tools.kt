@@ -8,6 +8,7 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.PermMedia
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Star
@@ -29,7 +30,7 @@ class Tools {
                 val icon = when (usage.screenName) {
                     "DashBoard" -> Icons.Filled.Home
                     "SecuredMedia" -> Icons.Filled.PermMedia
-                    "Profile" -> Icons.Filled.Person
+                    "Location" -> Icons.Filled.LocationOn
                     else -> Icons.Filled.Star
                 }
                 DrawerFeature(usage.screenName, icon)

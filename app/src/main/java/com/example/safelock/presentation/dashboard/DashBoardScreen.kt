@@ -33,6 +33,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.material.Switch
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddCard
@@ -97,6 +98,7 @@ import com.example.safelock.data.repository.model.DrawerFeature
 import com.example.safelock.data.repository.model.MediaData
 import com.example.safelock.presentation.analytics.ScreenUsageViewModel
 import com.example.safelock.presentation.securemedia.SecureMediaActivity
+import com.example.safelock.ui.theme.ThemeViewModel
 import com.example.safelock.utils.ApiResponse
 import com.example.safelock.utils.CustomLoadingBar
 import com.example.safelock.utils.Firebase.EventTracker
@@ -117,6 +119,7 @@ import java.io.File
 fun DashBoardScreen(
     modifier: Modifier = Modifier,
     navController: NavController?,
+    themeViewModel: ThemeViewModel?,
     viewModel: DashBoardViewModel = hiltViewModel(),
     screenUsageViewModel: ScreenUsageViewModel = hiltViewModel(),
     baseViewModel: BaseViewModel = hiltViewModel(),
@@ -199,8 +202,7 @@ fun DashBoardScreen(
                     "Most Used Features",
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
-
-                    )
+                )
 
 
                 if (drawerFeatures.isNotEmpty()) {
@@ -210,7 +212,17 @@ fun DashBoardScreen(
                                 .fillMaxWidth()
                                 .padding(16.dp)
                                 .clickable {
-                                    // handle navigation or action
+                                    if (feature.screenName == "DashBoard") {
+                                        scope.launch {
+                                            drawerState.close()
+                                        }
+                                    }
+                                    if (feature.screenName == "SecuredMedia") {
+                                        SecureMediaActivity.start(context)
+                                    }
+                                    if (feature.screenName == "Location") {
+                                        navController?.navigate(Route.LOCATION)
+                                    }
                                 },
                             verticalAlignment = Alignment.CenterVertically
                         ) {
@@ -250,6 +262,28 @@ fun DashBoardScreen(
 
                 // Spacer to push logout to the bottom
                 Spacer(modifier = Modifier.weight(1f))
+
+                //Dark/Light Theme Toggle
+                val darkThemeEnabled by themeViewModel?.theme!!.collectAsState()
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { themeViewModel?.setTheme(!darkThemeEnabled) }
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Change App Theme",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                    Switch(
+                        checked = darkThemeEnabled,
+                        onCheckedChange = { themeViewModel?.setTheme(it) }
+                    )
+                }
+
 
                 // Logout row
                 Row(
@@ -773,7 +807,7 @@ fun DashBoardScreenPreview(modifier: Modifier = Modifier) {
     ) {
         val navController = rememberNavController()
 
-        DashBoardScreen(modifier, navController)
+        DashBoardScreen(modifier, navController, null)
     }
 }
 

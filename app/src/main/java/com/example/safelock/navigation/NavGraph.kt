@@ -4,7 +4,6 @@ import SplashScreen
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.navigation.NavHost
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -19,12 +18,12 @@ import com.example.safelock.presentation.login.LoginScreen
 import com.example.safelock.presentation.onboarding.GettingStarted
 import com.example.safelock.presentation.onboarding.SignUpScreen
 import com.example.safelock.presentation.videoplayer.VideoPlayerScreen
+import com.example.safelock.ui.theme.ThemeViewModel
 import com.example.safelock.utils.Route
-import com.example.safelock.utils.base.BaseViewModel
 import com.example.safelock.utils.dialog.BiometricsAuthenticationDialog
 
 @Composable
-fun Navigation() {
+fun Navigation(themeViewModel: ThemeViewModel) {
     val navController = rememberNavController()
     NavHost(navController = navController, startDestination = "Splash screen") {
         composable("Splash screen") {
@@ -46,17 +45,17 @@ fun Navigation() {
             )
         }
         composable(Route.DASHBOARD) {
-            DashBoardScreen(modifier = Modifier, navController)
+            DashBoardScreen(modifier = Modifier, navController, themeViewModel)
         }
         composable(Route.SECURED_MEDIA){
             val activity = AppCompatActivity()
-            SecuredMedia(modifier = Modifier, navController, activity)
+            SecuredMedia(modifier = Modifier, navController, activity, themeViewModel)
         }
         composable(Route.HOME_SCREEN){
-            HomeScreen(modifier = Modifier, navController)
+            HomeScreen(modifier = Modifier, navController, themeViewModel)
         }
         composable(Route.LOCATION){
-            LocationComposable()
+            LocationComposable(navController)
         }
         composable("biometricsauthenticationdialog"){
             BiometricsAuthenticationDialog(modifier = Modifier,"", onCancelBiometricsDialog = {})
@@ -69,7 +68,7 @@ fun Navigation() {
                 nullable = true
             })
         ) { backStackEntry ->
-            // Retrieve the video URL; if it's null, it will default to ""
+            // Retrieve the video URL, if it's null, it will default to ""
             val videoUrl = backStackEntry.arguments?.getString("videoUrl") ?: ""
             VideoPlayerScreen(videoUrl = videoUrl, navController = navController)
         }
@@ -87,7 +86,7 @@ fun SecureMediaNavigation(modifier: Modifier) {
         val appCompatActivity = AppCompatActivity()
 
         composable(Route.SECURED_MEDIA) {
-            SecuredMedia(modifier, navController, appCompatActivity)
+            SecuredMedia(modifier, navController, appCompatActivity, themeViewModel = null)
         }
 
         composable(

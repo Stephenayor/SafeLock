@@ -3,17 +3,23 @@ package com.example.safelock.di
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.appcompat.app.AppCompatActivity
+import androidx.datastore.core.DataStore
+import androidx.datastore.dataStoreFile
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.preferences.core.Preferences
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import com.example.safelock.data.repository.SignUpLoginRepository
 import com.example.safelock.data.repository.DashBoardRepository
 import com.example.safelock.data.repository.ScreenUsageRepository
 import com.example.safelock.data.repository.SecuredMediaRepository
+import com.example.safelock.data.repository.ThemeRepository
 import com.example.safelock.data.repository.database.AppDatabase
 import com.example.safelock.data.repository.database.dao.SaveImageDao
 import com.example.safelock.data.repository.database.dao.ScreenUsageDao
 import com.example.safelock.domain.SignUpLoginRepositoryImpl
 import com.example.safelock.domain.DashBoardRepositoryImpl
+import com.example.safelock.domain.DefaultThemeRepository
 import com.example.safelock.domain.ScreenUsageRepositoryImpl
 import com.example.safelock.domain.SecuredMediaRepositoryImpl
 import com.example.safelock.utils.AppConstants
@@ -24,6 +30,7 @@ import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.storage
+import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -133,6 +140,24 @@ object AppModule {
     @Singleton
     fun provideSecuredMediaRepository(saveImageDao: SaveImageDao): SecuredMediaRepository {
         return SecuredMediaRepositoryImpl(saveImageDao)
+    }
+
+    @Module
+    @InstallIn(SingletonComponent::class)
+    abstract class ThemeModule {
+        @Binds
+        @Singleton
+        abstract fun bindThemeRepository(
+            defaultThemeRepository: DefaultThemeRepository
+        ): ThemeRepository
+    }
+
+    @Provides
+    @Singleton
+    fun provideThemeDataStore(@ApplicationContext context: Context): DataStore<Preferences> {
+        return PreferenceDataStoreFactory.create(
+            produceFile = { context.dataStoreFile("theme_prefs.preferences_pb") }
+        )
     }
 
 

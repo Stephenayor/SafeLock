@@ -54,6 +54,7 @@ import androidx.compose.ui.unit.dp
 import com.example.safelock.R
 import com.example.safelock.presentation.login.LoginViewModel
 import com.example.safelock.ui.theme.SafeLockTheme
+import com.example.safelock.ui.theme.ThemeViewModel
 import com.example.safelock.utils.AppConstants
 import com.example.safelock.utils.Tools
 import com.example.safelock.utils.biometrics.BiometricPromptManager
@@ -74,23 +75,26 @@ class BiometricsActivity : AppCompatActivity() {
     private lateinit var viewModel: LoginViewModel
     private val loginViewModel: LoginViewModel by viewModels()
     private lateinit var userId: String
-    private  var isFromGettingStarted: Boolean? = false
-    private  var isAuthenticated : Boolean = false
+    private var isFromGettingStarted: Boolean? = false
+    private var isAuthenticated: Boolean = false
     private lateinit var firebaseAuth: FirebaseAuth
+    val themeViewModel: ThemeViewModel by viewModels()
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            SafeLockTheme {
+            val darkThemeEnabled by themeViewModel.theme.collectAsState()
+            SafeLockTheme(darkThemeEnabled) {
                 // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    userId  = intent.getStringExtra(AppConstants.USER_UID).toString()
-                    isFromGettingStarted = intent.getBooleanExtra(AppConstants.GETTING_STARTED, false)
-                    isAuthenticated = intent.
-                    getBooleanExtra("LoginSuccessful", false)
+                    userId = intent.getStringExtra(AppConstants.USER_UID).toString()
+                    isFromGettingStarted =
+                        intent.getBooleanExtra(AppConstants.GETTING_STARTED, false)
+                    isAuthenticated = intent.getBooleanExtra("LoginSuccessful", false)
                     Log.d("biometrics", userId)
                     val biometricResult by promptManager.promptResults.collectAsState(
                         initial = null
@@ -116,7 +120,8 @@ class BiometricsActivity : AppCompatActivity() {
                     }
                     Column(
                         modifier = Modifier
-                            .fillMaxSize(),
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.background),
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
@@ -127,7 +132,8 @@ class BiometricsActivity : AppCompatActivity() {
                             // Display the custom UI
                             Box(
                                 modifier = Modifier
-                                    .fillMaxSize(),
+                                    .fillMaxSize()
+                                    .background(MaterialTheme.colorScheme.background),
                                 contentAlignment = Alignment.Center
                             ) {
 
@@ -138,7 +144,7 @@ class BiometricsActivity : AppCompatActivity() {
                                         .clip(
                                             RoundedCornerShape(8.dp)
                                         )
-                                        .background(Color.White)
+                                        .background(MaterialTheme.colorScheme.background)
                                         .padding(16.dp),
                                     horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
@@ -146,7 +152,7 @@ class BiometricsActivity : AppCompatActivity() {
                                         modifier = Modifier.padding(top = 8.dp),
                                         text = "Authentication",
                                         style = MaterialTheme.typography.headlineSmall,
-                                        color = Color.Black,
+                                        color = Color.Unspecified,
                                         textAlign = TextAlign.Center,
                                         fontFamily = FontFamily.Monospace
                                     )
@@ -177,7 +183,8 @@ class BiometricsActivity : AppCompatActivity() {
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .padding(top = 5.dp),
+                                            .padding(top = 5.dp)
+                                            .background(MaterialTheme.colorScheme.background),
                                         horizontalArrangement = Arrangement.SpaceEvenly
                                     ) {
                                         // Cancel Button
@@ -212,13 +219,13 @@ class BiometricsActivity : AppCompatActivity() {
                         biometricResult?.let { result ->
                             if (result is BiometricPromptManager.BiometricResult.AuthenticationSuccess) {
                                 LaunchedEffect(Unit) {
-                                    if (isFromGettingStarted as Boolean){
+                                    if (isFromGettingStarted as Boolean) {
                                         val intent = Intent().apply {
                                             putExtra("AUTH_SUCCESS", true)
                                         }
                                         setResult(Activity.RESULT_OK, intent)
                                         finish()
-                                    }else{
+                                    } else {
                                         val intent = Intent().apply {
                                             putExtra("AUTH_SUCCESS", true)
                                         }
@@ -230,12 +237,12 @@ class BiometricsActivity : AppCompatActivity() {
                             }
 
                             if (result is BiometricPromptManager.BiometricResult.AuthenticationError) {
-                                if (isAuthenticated){
+                                if (isAuthenticated) {
                                     firebaseAuth = Firebase.auth
                                     firebaseAuth.signOut()
                                     Tools.showToast(LocalContext.current, result.error)
                                     finish()
-                                }else {
+                                } else {
                                     Tools.showToast(LocalContext.current, result.error)
                                     finish()
                                 }

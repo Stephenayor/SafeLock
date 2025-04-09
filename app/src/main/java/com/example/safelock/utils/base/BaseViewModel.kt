@@ -87,6 +87,5 @@ open class BaseViewModel @Inject constructor(
         return promptManager
     }
 
-    lateinit var appNavigationController: NavController
 
 }

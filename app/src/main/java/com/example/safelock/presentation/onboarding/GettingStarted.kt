@@ -72,13 +72,13 @@ fun GettingStarted(
         firebaseAnalytics.logEvent(FirebaseAnalytics.Event.SCREEN_VIEW, bundle)
     }
     Scaffold(
-        modifier = Modifier.background(MaterialTheme.colorScheme.primary)
+        modifier = Modifier.background(MaterialTheme.colorScheme.background)
     ) { innerPadding ->
         Modifier.padding(innerPadding)
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.White)
+                .background(MaterialTheme.colorScheme.background)
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -197,7 +197,6 @@ fun trackScreen(name: String, analyticsViewModel: AnalyticsViewModel) {
         }
     }
 }
-
 
 
 @SuppressLint("ComposableNaming")

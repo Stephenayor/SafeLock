@@ -3,6 +3,7 @@ package com.example.safelock.presentation.securemedia
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -26,6 +27,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -45,7 +47,13 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import coil.decode.VideoFrameDecoder
+import coil.request.ImageRequest
+import coil.request.videoFrameMillis
+import com.example.safelock.MainActivity
 import com.example.safelock.R
+import com.example.safelock.ui.theme.SafeLockTheme
+import com.example.safelock.ui.theme.ThemeViewModel
 import com.example.safelock.utils.ApiResponse
 import com.example.safelock.utils.Route
 import com.example.safelock.utils.Tools
@@ -59,151 +67,155 @@ fun SecuredMedia(
     modifier: Modifier = Modifier,
     navController: NavController,
     activity: AppCompatActivity,
+    themeViewModel: ThemeViewModel?,
     baseViewModel: BaseViewModel = hiltViewModel(),
     securedMediaViewModel: SecuredMediaViewModel = hiltViewModel()
 ) {
-    val savedImages by baseViewModel.savedImagesInDB.collectAsState()
-    var isLoadingForMediaFiles by remember { mutableStateOf(false) }
-    var isLoading by remember { mutableStateOf(false) }
-    val deleteMediaDataState by securedMediaViewModel.deleteMediaDataState.collectAsState()
+    val darkThemeEnabled by themeViewModel?.theme!!.collectAsState()
+    SafeLockTheme(darkTheme = darkThemeEnabled) {
+        val savedImages by baseViewModel.savedImagesInDB.collectAsState()
+        var isLoadingForMediaFiles by remember { mutableStateOf(false) }
+        var isLoading by remember { mutableStateOf(false) }
+        val deleteMediaDataState by securedMediaViewModel.deleteMediaDataState.collectAsState()
+        val context = LocalContext.current
 
-    baseViewModel.initPromptManager(activity)
-    baseViewModel.onScreenViewed("SecuredMedia")
-    baseViewModel.appNavigationController = navController
+        baseViewModel.initPromptManager(activity)
+        baseViewModel.onScreenViewed("SecuredMedia")
 
-    Scaffold(
-        topBar = {
-            // Top App Bar with back button
-            androidx.compose.material3.TopAppBar(
-                title = { Text(text = "Secured Media") },
-                navigationIcon = {
-                    androidx.compose.material3.IconButton(
-                        onClick = {
-                            navController.navigate(Route.DASHBOARD) {
-                                popUpTo(Route.DASHBOARD) { inclusive = true }
+        Scaffold(
+            topBar = {
+                // Top App Bar with back button
+                TopAppBar(
+                    title = { Text(text = "Secured Media") },
+                    navigationIcon = {
+                        androidx.compose.material3.IconButton(
+                            onClick = {
+                                navController.navigate(Route.HOME_SCREEN)
                             }
+                        ) {
+                            Image(
+                                painter = painterResource(R.drawable.back_button),
+                                contentDescription = "Back",
+                                modifier = Modifier.size(25.dp)
+                            )
                         }
-                    ) {
-                        Image(
-                            painter = painterResource(R.drawable.back_button),
-                            contentDescription = "Back",
-                            modifier = Modifier.size(25.dp)
-                        )
                     }
-                }
-            )
-        },
-        modifier = Modifier.padding(top = 10.dp)
-    ) { padding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
-
-            Column(
-                modifier = modifier
+                )
+            },
+            modifier = Modifier.padding(top = 10.dp)
+        ) { padding ->
+            Box(
+                modifier = Modifier
                     .fillMaxSize()
-                    .padding(8.dp)
+                    .padding(padding)
+                    .background(MaterialTheme.colorScheme.background)
             ) {
 
-                LaunchedEffect(Unit) {
-                    baseViewModel.getSavedImages()
-                    delay(1000)
-                    baseViewModel.showBiometricPrompt(
-                        title = "Secure Access",
-                        description = "Please authenticate to access your secured media"
-                    )
-                }
+                Column(
+                    modifier = modifier
+                        .fillMaxSize()
+                        .padding(8.dp)
+                        .background(MaterialTheme.colorScheme.background)
+                ) {
 
-                // Observe the biometric results
-                val biometricResult by baseViewModel.getPromptManager().promptResults.collectAsState(
-                    initial = null
-                )
-                BiometricResultScreen(biometricResult, navController)
-
-                when (val state = savedImages) {
-                    is ApiResponse.Idle -> {}
-                    is ApiResponse.Loading -> {
-                        isLoadingForMediaFiles = true
+                    LaunchedEffect(Unit) {
+                        baseViewModel.getSavedImages()
+                        delay(1000)
+                        baseViewModel.showBiometricPrompt(
+                            title = "Secure Access",
+                            description = "Please authenticate to access your secured media"
+                        )
                     }
 
-                    is ApiResponse.Success -> {
-                        isLoadingForMediaFiles = false
-                        val savedImagesList = state.data
-                        if (savedImagesList != null) {
-                            LazyVerticalGrid(
-                                columns = GridCells.Adaptive(minSize = 130.dp),
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(8.dp),
-                                contentPadding = PaddingValues(8.dp)
-                            ) {
-                                items(savedImagesList) { mediaItem ->
-                                    val encodedVideoUrl = Uri.encode(mediaItem.imageUrl, "/:?&=")
-                                    val testVideoUrl =
-                                        "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+                    // Observe the biometric results
+                    val biometricResult by baseViewModel.getPromptManager().promptResults.collectAsState(
+                        initial = null
+                    )
+                    BiometricResultScreen(biometricResult, navController)
 
-                                    UploadedItemView(
-                                        title = mediaItem.imageTitle,
-                                        imageUrl = mediaItem.imageUrl,
-                                        isVideo = mediaItem.isVideo,
-                                        onVideoClick = {
-                                            navController.navigate("video_player_screen?${encodedVideoUrl}")
-                                        },
-                                        onDeleteButtonClick = {
-                                            securedMediaViewModel.deleteMediaByTitle(mediaItem.imageTitle)
-                                        },
-                                        baseViewModel,
-                                        navController
-                                    )
+                    when (val state = savedImages) {
+                        is ApiResponse.Idle -> {}
+                        is ApiResponse.Loading -> {
+                            isLoadingForMediaFiles = true
+                        }
+
+                        is ApiResponse.Success -> {
+                            isLoadingForMediaFiles = false
+                            val savedImagesList = state.data
+                            if (savedImagesList != null) {
+                                LazyVerticalGrid(
+                                    columns = GridCells.Adaptive(minSize = 130.dp),
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(8.dp),
+                                    contentPadding = PaddingValues(8.dp)
+                                ) {
+                                    items(savedImagesList) { mediaItem ->
+                                        val encodedVideoUrl =
+                                            Uri.encode(mediaItem.imageUrl, "/:?&=")
+                                        val testVideoUrl =
+                                            "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+
+                                        UploadedItemView(
+                                            title = mediaItem.imageTitle,
+                                            imageUrl = mediaItem.imageUrl,
+                                            isVideo = mediaItem.isVideo,
+                                            onVideoClick = {
+                                                navController.navigate("video_player_screen?${encodedVideoUrl}")
+                                            },
+                                            onDeleteButtonClick = {
+                                                securedMediaViewModel.deleteMediaByTitle(mediaItem.imageTitle)
+                                            },
+                                            baseViewModel,
+                                            navController
+                                        )
+                                    }
                                 }
                             }
                         }
+
+                        is ApiResponse.Failure -> {
+                            isLoadingForMediaFiles = false
+                            Text(
+                                text = "Failed to load media files",
+                                color = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.fillMaxSize(),
+                                textAlign = TextAlign.Center
+                            )
+                        }
                     }
 
-                    is ApiResponse.Failure -> {
-                        isLoadingForMediaFiles = false
-                        Text(
-                            text = "Failed to load media files",
-                            color = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.fillMaxSize(),
-                            textAlign = TextAlign.Center
-                        )
+                    if (isLoading) {
+                        Box(
+                            modifier
+                                .fillMaxSize()
+                                .align(Alignment.CenterHorizontally)
+                        ) {
+                            CircularProgressIndicator()
+                        }
                     }
-                }
-
-                if (isLoading) {
-                    Box(
-                        modifier
-                            .fillMaxSize()
-                            .align(Alignment.CenterHorizontally)
-                    ){
-                        CircularProgressIndicator()
-                    }
-                }
-                LaunchedEffect(deleteMediaDataState) {
-                    if (deleteMediaDataState is ApiResponse.Success) {
-                        baseViewModel.getSavedImages()
-                    }
-                }
-
-
-                when (val state = deleteMediaDataState) {
-                    is ApiResponse.Idle -> {}
-                    is ApiResponse.Loading -> {
-                        isLoading = true
+                    LaunchedEffect(deleteMediaDataState) {
+                        if (deleteMediaDataState is ApiResponse.Success) {
+                            baseViewModel.getSavedImages()
+                        }
                     }
 
-                    is ApiResponse.Success -> {
-                        isLoading = false
-                        isLoadingForMediaFiles = false
-//                        baseViewModel.getSavedImages()
-                    }
 
-                    is ApiResponse.Failure -> {
-                        isLoading = false
-                        Tools.showToast(LocalContext.current, "Failed to delete Data")
+                    when (val state = deleteMediaDataState) {
+                        is ApiResponse.Idle -> {}
+                        is ApiResponse.Loading -> {
+                            isLoading = true
+                        }
+
+                        is ApiResponse.Success -> {
+                            isLoading = false
+                            isLoadingForMediaFiles = false
+                        }
+
+                        is ApiResponse.Failure -> {
+                            isLoading = false
+                            Tools.showToast(LocalContext.current, "Failed to delete Data")
+                        }
                     }
                 }
             }
@@ -294,7 +306,7 @@ fun UploadedItemView(
 ) {
     Card(
         shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background),
         modifier = Modifier
             .fillMaxWidth()
             .height(320.dp) // Increased item height
@@ -305,14 +317,36 @@ fun UploadedItemView(
                 modifier = Modifier
                     .weight(1f) // Takes remaining space
                     .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.background)
             ) {
-                // Background image
-                AsyncImage(
-                    model = imageUrl,
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
+
+
+                if (isVideo) {
+                    val model = ImageRequest.Builder(LocalContext.current)
+                        .data(imageUrl)
+                        .videoFrameMillis(10000)
+                        .decoderFactory { result, options, _ ->
+                            VideoFrameDecoder(
+                                result.source,
+                                options
+                            )
+                        }
+                        .build()
+                    AsyncImage(
+                        modifier = Modifier.fillMaxSize(),
+                        model = model,
+                        contentDescription = "video thumbnail",
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    AsyncImage(
+                        model = imageUrl,
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+//
                 if (isVideo) {
                     IconButton(
                         onClick = { onVideoClick(imageUrl) },

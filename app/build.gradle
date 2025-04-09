@@ -143,4 +143,7 @@ dependencies {
     // Street View metadata checks, etc.
     implementation libs.maps.compose.utils
     implementation libs.maps.compose.widgets
+
+    //DataStore Preferences
+    implementation libs.androidx.datastore.preferences
 }

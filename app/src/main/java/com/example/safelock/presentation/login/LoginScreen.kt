@@ -54,6 +54,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.safelock.R
 import com.example.safelock.presentation.biometrics.BiometricsActivity
+import com.example.safelock.ui.theme.ThemeViewModel
 import com.example.safelock.utils.ApiResponse
 import com.example.safelock.utils.AppConstants
 import com.example.safelock.utils.biometrics.BiometricPromptManager
@@ -108,7 +109,7 @@ fun LoginScreen(
             .fillMaxWidth()
             .fillMaxSize()
             .padding(top = 55.dp)
-            .background(Color(0xFFF5F7FB))
+            .background(MaterialTheme.colorScheme.background)
     ) {
         firebaseAuth = Firebase.auth
         Column(
@@ -363,5 +364,6 @@ fun LoginScreen(
 @Preview(showBackground = true)
 @Composable
 fun LoginScreenPreview(modifier: Modifier = Modifier) {
+    val loginViewModel : LoginViewModel = hiltViewModel()
     LoginScreen(navController = null)
 }

@@ -13,4 +13,7 @@ Onboarding Page <img width="229" alt="Screenshot 2025-04-08 at 23 35 16" src="ht
 - **Coroutines**
 - **Android Biometrics API**
 
+  ## System Architecture Design
+  https://docs.google.com/document/d/19B4wAz2nMiHkli3FKe-EfNy_jbfTo_TSCaV_vRUTHQQ/edit?tab=t.0
+
 

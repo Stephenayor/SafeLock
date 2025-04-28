@@ -1,4 +1,4 @@
-The app allows user upload media and sensitive data to a secured space that needs biometrics authentication to access
+Safelock App is a multi-featured personal safety and utility app that enables users to manage and secure personal data, capture and upload photos/videos, access location-based services, and use real-time notifications. It's a mix of a digital locker, a media hub, and a location-based alert system.
 
 ## Screenshots
 
